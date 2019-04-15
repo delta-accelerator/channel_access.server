@@ -347,19 +347,14 @@ class PVImpl(cas.PV):
 
     # only call with data lock held
     def _update_value(self, value):
-        print("Update value", value)
-
         value = self._constrain_value(value)
         status, severity = self._calculate_status_severity(value)
-
-        print("Value=", value, "Status=", status, "Severity=", severity)
 
         old_value = self._data.get('value')
         if value != old_value:
             self._data['value'] = value
             if isinstance(value, int) or isinstance(value, float):
                 diff = abs(value - old_value)
-                print(diff, self._value_deadband)
                 if diff >= self._value_deadband:
                     self._outstanding_events |= Events.VALUE
                 if diff >= self._archive_deadband:
@@ -370,7 +365,6 @@ class PVImpl(cas.PV):
 
     # only call with data lock held
     def _update_meta(self, key, value):
-        print("Update meta", key, value)
         if value != self._data.get(key):
             self._data[key] = value
             self._outstanding_events |= Events.PROPERTY
@@ -406,28 +400,23 @@ class PVImpl(cas.PV):
     # only call with data lock held
     def _publish(self):
         events = self._outstanding_events
-        print("Publish", events, self._data)
         self._outstanding_events = Events.NONE
         if self._publish_events and events != Events.NONE:
             self.postEvent(events, self._encode(self._data))
 
     def count(self):
-        print("Count")
         return self._count
 
     def type(self):
-        print("Type")
         return self._type
 
     def read(self):
-        print("Read")
         with self._data_lock:
             data = self._data.copy()
         return self._encode(data)
 
     def write(self, value, timestamp=None):
         value, timestamp = self._decode(value, timestamp)
-        print("Write", value, timestamp)
         with self._data_lock:
             self._update_value(value)
             self._update_meta('timestamp', timestamp)
@@ -436,18 +425,13 @@ class PVImpl(cas.PV):
         return False
 
     def interestRegister(self):
-        print("interestRegister")
         with self._data_lock:
             self._publish_events = True
         return True
 
     def interestDelete(self):
-        print("interestDelete")
         with self._data_lock:
             self._publish_events = False
-
-    def destroy(self):
-        print("Destroy")
 
 
 class Server(object):
@@ -494,13 +478,11 @@ class ServerImpl(cas.Server):
         self._pvs = weakref.WeakValueDictionary()
 
     def pvExistTest(self, client, pv_name):
-        print("Exists?", client, pv_name)
         if pv_name in self._pvs:
             return ExistsResponse.EXISTS_HERE
         return ExistsResponse.NOT_EXISTS_HERE
 
     def pvAttach(self, pv_name):
-        print("Attach")
         pv = self._pvs.get(pv_name)
         if pv is None:
             return AttachResponse.NOT_FOUND

@@ -1,7 +1,6 @@
 #include "server.hpp"
 
 #include <memory>
-#include <iostream>
 #include <Python.h>
 #include <structmember.h>
 #include <casdef.h>

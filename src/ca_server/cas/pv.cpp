@@ -1,7 +1,6 @@
 #include "pv.hpp"
 
 #include <memory>
-#include <iostream>
 #include <Python.h>
 #include <structmember.h>
 #include <casdef.h>
@@ -167,8 +166,6 @@ public:
 
     virtual caStatus read(casCtx const& ctx, gdd& prototype) override
     {
-        std::cout << "Read function\n";
-
         aitEnum type = aitEnumInvalid;
         caStatus ret = S_casApp_noSupport;
         PyGILState_STATE gstate = PyGILState_Ensure();
@@ -202,7 +199,6 @@ public:
                     if (result and result != Py_None) {
                         if (to_gdd(result, type, prototype)) {
                             ret = S_casApp_success;
-                            prototype.dump();
                         }
                         Py_DECREF(result);
                     }
@@ -224,7 +220,6 @@ public:
 
     virtual caStatus write(casCtx const& ctx, gdd const& value) override
     {
-        std::cout << "Write function\n";
 
         caStatus ret = S_casApp_noSupport;
         PyGILState_STATE gstate = PyGILState_Ensure();
@@ -295,8 +290,6 @@ public:
                 auto* values = new gdd{gddAppType_value};
 
                 if (to_gdd(py_values, type, *values)) {
-                    std::cout << "postEvent\n";
-                    values->dump();
                     static_cast<casPV*>(proxy)->postEvent(mask, *values);
                 }
 

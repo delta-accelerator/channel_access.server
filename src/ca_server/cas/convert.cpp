@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <unordered_map>
-#include <iostream>
 #include <db_access.h>
 #include <aitTypes.h>
 #include <gddAppTable.h>
@@ -503,8 +502,6 @@ bool to_gdd(PyObject* dict, aitEnum type, gdd &result)
     if (not dict) return false;
 
     int app = result.applicationType();
-    std::cout << "to_gdd " << app << std::endl;
-    result.dump();
 
     switch (app) {
         // STS and TIME are also gddAppType_value because status, severity and
@@ -553,9 +550,6 @@ bool to_gdd(PyObject* dict, aitEnum type, gdd &result)
 
 PyObject* from_gdd(gdd const& value)
 {
-    std::cout << "from_gdd\n";
-    value.dump();
-
     int app = value.applicationType();
     if (app != gddAppType_value) {
         char* app_name = gddApplicationTypeTable::app_table.getName(app);
