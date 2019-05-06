@@ -412,8 +412,7 @@ class PVImpl(cas.PV):
 
     def read(self):
         with self._data_lock:
-            data = self._data.copy()
-        return self._encode(data)
+            return self._encode(self._data)
 
     def write(self, value, timestamp=None):
         value, timestamp = self._decode(value, timestamp)
