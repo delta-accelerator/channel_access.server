@@ -289,10 +289,14 @@ public:
             if (server and to_event_mask(py_events, mask, *server)) {
                 auto* values = new gdd{gddAppType_value};
 
-                if (to_gdd(py_values, type, *values)) {
-                    static_cast<casPV*>(proxy)->postEvent(mask, *values);
+                try {
+                    if (to_gdd(py_values, type, *values)) {
+                        static_cast<casPV*>(proxy)->postEvent(mask, *values);
+                    }
+                } catch (...) {
+                    values->unreference();
+                    throw;
                 }
-
                 values->unreference();
             }
         }
