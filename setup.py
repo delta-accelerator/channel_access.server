@@ -15,10 +15,10 @@ elif sys.platform.startswith('linux'):
     libsrc = 'Linux'
     compiler = 'gcc'
 
-epics_inc = os.path.join(os.environ['EPICS_BASE'], 'include')
-epics_lib = os.path.join(os.environ['EPICS_BASE'], 'lib', os.getenv('EPICS_HOST_ARCH'))
-
-compiler_args = ['-Wall', '-std=c++14']
+epics_base = os.environ['EPICS_BASE']
+epics_host_arch = os.environ['EPICS_HOST_ARCH']
+epics_inc = os.path.join(epics_base, 'include')
+epics_lib = os.path.join(epics_base, 'lib', epics_host_arch)
 
 
 cas_extension = Extension('ca_server.cas',
@@ -37,7 +37,7 @@ cas_extension = Extension('ca_server.cas',
     ],
     library_dirs = [ epics_lib ],
     runtime_library_dirs = [ epics_lib ],
-    extra_compile_args = compiler_args,
+    extra_compile_args = ['-Wall', '-std=c++11'],
     libraries=['Com', 'ca', 'cas', 'gdd']
 )
 

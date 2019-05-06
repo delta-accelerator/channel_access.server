@@ -399,7 +399,7 @@ PyObject* pv_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     if (not self) return nullptr;
 
     Pv* pv = reinterpret_cast<Pv*>(self);
-    pv->proxy = std::make_unique<PvProxy>(self);
+    pv->proxy.reset(new PvProxy(self));
     return self;
 }
 

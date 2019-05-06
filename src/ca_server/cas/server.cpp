@@ -138,7 +138,7 @@ PyObject* server_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     }
 
     Server* server = reinterpret_cast<Server*>(self);
-    server->proxy = std::make_unique<ServerProxy>(self);
+    server->proxy.reset(new ServerProxy(self));
     return self;
 }
 
