@@ -8,11 +8,61 @@
 #include <gddApps.h>
 #include <cadef.h>
 
+#if CA_SERVER_NUMPY_SUPPORT
+#define NO_IMPORT_ARRAY
+#define PY_ARRAY_UNIQUE_SYMBOL CA_SERVER_ARRAY_API
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+#endif
+
 #include "cas.hpp"
 #include "pv.hpp"
 
 namespace cas {
 namespace {
+
+#if CA_SERVER_NUMPY_SUPPORT
+
+// GDD            Description                 Numpy
+// aitString      40 character string         -------
+// aitEnumEnum16  16-bit unsigned integer     NPY_UINT16
+// aitInt8        8-bit character             NPY_UINT8
+// aitInt16       16-bit integer              NPY_INT16
+// aitInt32       32-bit signed integer       NPY_INT32
+// aitFloat32     32-bit IEEE floating point  NPY_FLOAT32
+// aitFloat64     64-bit IEEE floating pint   NPY_FLOAT64
+
+int numpy_array_type(aitEnum16 const*)
+{
+    return NPY_UINT16;
+}
+
+int numpy_array_type(aitInt8 const*)
+{
+    return NPY_UINT8;
+}
+
+int numpy_array_type(aitInt16 const*)
+{
+    return NPY_INT16;
+}
+
+int numpy_array_type(aitInt32 const*)
+{
+    return NPY_UINT32;
+}
+
+int numpy_array_type(aitFloat32 const*)
+{
+    return NPY_FLOAT32;
+}
+
+int numpy_array_type(aitFloat64 const*)
+{
+    return NPY_FLOAT64;
+}
+
+#endif
 
 //
 // Write functions. Create a python value from a gdd value.
@@ -51,7 +101,7 @@ auto py_convert(T value) -> typename std::enable_if<std::is_floating_point<T>::v
 }
 
 template <typename T>
-PyObject* write_value(gdd const& value)
+PyObject* write_value(gdd const& value, bool numpy)
 {
     if (value.isScalar()) {
         return py_convert(static_cast<T>(value));
@@ -65,17 +115,32 @@ PyObject* write_value(gdd const& value)
             return py_convert(static_cast<T>(data[0]));
         }
 
-        PyObject* list = PyTuple_New(count);
-        if (not list) return nullptr;
+        PyObject* list = nullptr;
+#if CA_SERVER_NUMPY_SUPPORT
+        if (numpy) {
+            npy_intp dims[1] = { count };
+            int typenum = numpy_array_type(data);
 
-        for (aitIndex i = first; i < count; ++i) {
-            PyObject* py_val = py_convert(static_cast<T>(data[i]));
-            if (not py_val) {
-                Py_DECREF(list);
-                return nullptr;
+            list = PyArray_SimpleNew(1, dims, typenum);
+            if (not list) return nullptr;
+
+            void* array_data = PyArray_DATA(reinterpret_cast<PyArrayObject*>(list));
+            memcpy(array_data, &data[first], count * sizeof(T));
+        } else
+#endif
+        {
+            list = PyTuple_New(count);
+            if (not list) return nullptr;
+
+            for (aitIndex i = first; i < count; ++i) {
+                PyObject* py_val = py_convert(static_cast<T>(data[i]));
+                if (not py_val) {
+                    Py_DECREF(list);
+                    return nullptr;
+                }
+
+                PyTuple_SET_ITEM(list, i - first, py_val);
             }
-
-            PyTuple_SET_ITEM(list, i - first, py_val);
         }
 
         return list;
@@ -134,12 +199,28 @@ bool read_value_impl(PyObject* value, aitEnum type, gdd& result)
     Py_ssize_t size = PySequence_Size(value);
     if (PyErr_Occurred()) return false;
 
-    std::vector<T> data(size);
-    for (Py_ssize_t i = 0; i < size; ++i) {
-        PyObject* item = PySequence_GetItem(value, i);
-        if (not item) return false;
+    std::vector<T> data;
+#if CA_SERVER_NUMPY_SUPPORT
+    if (PyArray_Check(value)) {
+        data.reserve(size);
+        int typenum = numpy_array_type(static_cast<const T*>(nullptr));
 
-        if (not py_convert(item, data[i])) return false;
+        PyObject* ndarray = PyArray_FROMANY(value, typenum, 1, 1, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
+        if (not ndarray) return false;
+
+        auto const* array_data = static_cast<const T*>(PyArray_DATA(reinterpret_cast<PyArrayObject*>(ndarray)));
+        data.assign(array_data, array_data + size);
+        Py_DECREF(ndarray);
+    } else
+#endif
+    {
+        data.resize(size);
+        for (Py_ssize_t i = 0; i < size; ++i) {
+            PyObject* item = PySequence_GetItem(value, i);
+            if (not item) return false;
+
+            if (not py_convert(item, data[i])) return false;
+        }
     }
 
     if (size == 1) {
@@ -547,7 +628,7 @@ bool to_gdd(PyObject* dict, aitEnum type, gdd &result)
     return false;
 }
 
-PyObject* from_gdd(gdd const& value)
+PyObject* from_gdd(gdd const& value, bool numpy)
 {
     int app = value.applicationType();
     if (app != gddAppType_value) {
@@ -566,22 +647,22 @@ PyObject* from_gdd(gdd const& value)
             val = write_string(value);
             break;
         case aitEnumEnum16:
-            val = write_value<aitEnum16>(value);
+            val = write_value<aitEnum16>(value, numpy);
             break;
         case aitEnumInt8:
-            val = write_value<aitInt8>(value);
+            val = write_value<aitInt8>(value, numpy);
             break;
         case aitEnumInt16:
-            val = write_value<aitInt16>(value);
+            val = write_value<aitInt16>(value, numpy);
             break;
         case aitEnumInt32:
-            val = write_value<aitInt32>(value);
+            val = write_value<aitInt32>(value, numpy);
             break;
         case aitEnumFloat32:
-            val = write_value<aitFloat32>(value);
+            val = write_value<aitFloat32>(value, numpy);
             break;
         case aitEnumFloat64:
-            val = write_value<aitFloat64>(value);
+            val = write_value<aitFloat64>(value, numpy);
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unhandled gdd primitive type");

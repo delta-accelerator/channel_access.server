@@ -7,15 +7,21 @@ import channel_access.common as ca
 from . import cas
 from .cas import ExistsResponse, AttachResponse
 
+# Only import numpy if compiled with numpy support
+if cas.NUMPY_SUPPORT:
+    import numpy
+else:
+    numpy = None
 
 
-def default_attributes(type, count):
+def default_attributes(type, count, use_numpy):
     """
     Return the default attributes dictionary for new PVs.
 
     Args:
         type (:class:`channel_access.common.Type`): Type of the PV.
         count (int): Number of elements of the PV.
+    use_numpy (bool): If ``True`` use numpy arrays.
 
     Returns:
         dict: Attributes dictionary.
@@ -29,7 +35,13 @@ def default_attributes(type, count):
     if type == ca.Type.STRING:
         result['value'] = ''
     else:
-        result['value'] = 0 if count == 1 else (0,) * count
+        if count == 1:
+            result['value'] = 0
+        else:
+            if numpy and use_numpy:
+                result['value'] = numpy.zeros(count)
+            else:
+                result['value'] = (0,) * count
         result['unit'] = ''
         result['control_limits'] = (0, 0)
         result['display_limits'] = (0, 0)
@@ -105,7 +117,7 @@ class PV(object):
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
     """
-    def __init__(self, name, type, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
+    def __init__(self, name, type, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', use_numpy=None):
         """
         Args:
             name (str|bytes): Name of the PV.
@@ -121,10 +133,12 @@ class PV(object):
                 This is only used for numerical PVs.
             encoding (str): The encoding used for the PV name and string
                 attributes. If ``None`` these values must be bytes.
+            use_numpy (bool): If ``True`` use numpy arrays. If ``None``
+                use numpy arrays if numpy support is available.
         """
         super().__init__()
         self._name = name
-        self._pv = _PV(name, type, count, attributes, value_deadband, archive_deadband, encoding)
+        self._pv = _PV(name, type, count, attributes, value_deadband, archive_deadband, encoding, use_numpy)
 
     @property
     def name(self):
@@ -132,6 +146,17 @@ class PV(object):
         str: The name of this PV.
         """
         return self._name
+
+    @property
+    def use_numpy(self):
+        """
+        bool: Wether this PV uses numpy arrays for its value.
+        """
+        return self._pv.use_numpy
+
+    @use_numpy.setter
+    def use_numpy(self, value):
+        self._pv.use_numpy = value
 
     @property
     def count(self):
@@ -385,10 +410,12 @@ class _PV(cas.PV):
 
     This class handles all requests from the underlying binding class.
     """
-    def __init__(self, name, type, count, attributes, value_deadband, archive_deadband, encoding):
+    def __init__(self, name, type, count, attributes, value_deadband, archive_deadband, encoding, use_numpy):
         if encoding is not None:
             name = name.encode(encoding)
-        super().__init__(name)
+        if use_numpy is None:
+            use_numpy = numpy is not None
+        super().__init__(name, use_numpy)
         self._type = type
         self._count = count
         self._encoding = encoding
@@ -398,7 +425,7 @@ class _PV(cas.PV):
         self._attributes_lock = threading.Lock()
         self._outstanding_events = ca.Events.NONE
         self._publish_events = False
-        self._attributes = default_attributes(type, count)
+        self._attributes = default_attributes(type, count, use_numpy)
         if attributes is not None:
             self._update_attributes(attributes)
 

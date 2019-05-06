@@ -20,13 +20,17 @@ bool to_attach_return(PyObject* value, pvAttachReturn& result);
 bool to_ait_enum(PyObject* value, aitEnum& result);
 
 /** convert python value to gdd value
- * use type as the value type
+ * use type as the value type.
+ * convert any sequence to an array.
  */
 bool to_gdd(PyObject* dict, aitEnum type, gdd &result);
 
 /** convert a gdd value to a python value
+ * If compiled without numpy support, numpy is always false.
+ * For array values:
+ *   if numpy is true create a numpy array otherwise create a tuple.
  */
-PyObject* from_gdd(gdd const& value);
+PyObject* from_gdd(gdd const& value, bool numpy = false);
 
 /** convert python Trigger value to caEvent mask value
  */
