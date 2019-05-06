@@ -262,11 +262,11 @@ class PVImpl(cas.PV):
         self._archive_deadband = archive_deadband
 
         self._data_lock = threading.Lock()
-        self._data = default_data(type, count)
-        if data is not None:
-            self._data.update(data)
         self._outstanding_events = Events.NONE
         self._publish_events = False
+        self._data = default_data(type, count)
+        if data is not None:
+            self._update_data(data)
 
     def _encode(self, data):
         result = data.copy()
