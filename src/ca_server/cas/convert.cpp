@@ -185,11 +185,10 @@ bool to_ait_string(PyObject* value, aitString& string)
 
 bool read_string(PyObject* value, gdd& result)
 {
-    aitString* ait_str = nullptr;
-    result.getRef(ait_str);
-    if (not ait_str) return false;
+    aitString ait_str;
+    if (not to_ait_string(value, ait_str)) return false;
 
-    return to_ait_string(value, *ait_str);
+    return result.put(ait_str) == 0;
 }
 
 bool read_status(PyObject* value, gdd& result)
