@@ -138,7 +138,12 @@ PyObject* server_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     }
 
     Server* server = reinterpret_cast<Server*>(self);
-    server->proxy.reset(new ServerProxy(self));
+    try {
+        server->proxy.reset(new ServerProxy(self));
+    } catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Could not create ServerProxy");
+        return nullptr;
+    }
     return self;
 }
 
