@@ -54,16 +54,16 @@ setup(
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Scientific/Engineering'
     ],
     keywords = 'epics ca cas channel_access',
     packages = PEP420PackageFinder.find('src'),
     package_dir = { '': 'src' },
     ext_modules = [ cas_extension ],
-    python_requires = '>= 3.4',
+    python_requires = '>= 3.5',
     setup_requires = [ 'setuptools_scm' ],
     install_requires = [ 'channel_access.common' ],
     extras_require = {
