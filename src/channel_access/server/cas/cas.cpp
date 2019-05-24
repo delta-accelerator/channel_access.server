@@ -45,11 +45,11 @@ Low level wrapper module over the cas interface.
 )");
 PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
-    "ca_server.cas",        /* name of module */
-    cas__doc__,             /* module documentation, may be NULL */
-    -1,                     /* size of per-interpreter state of the module,
-                                or -1 if the module keeps state in global variables. */
-    methods,                /* methods */
+    "channel_access.server.cas", /* name of module */
+    cas__doc__,                  /* module documentation, may be NULL */
+    -1,                          /* size of per-interpreter state of the module,
+                                    or -1 if the module keeps state in global variables. */
+    methods,                     /* methods */
 };
 
 PyDoc_STRVAR(exists__doc__, R"(
@@ -120,7 +120,7 @@ PyMODINIT_FUNC PyInit_cas(void)
     if (not module) goto error;
 
 
-    ca_module = PyImport_ImportModule("ca_client.ca");
+    ca_module = PyImport_ImportModule("channel_access.common");
     if (not ca_module) goto error;
 
     cas::enum_type = PyObject_GetAttrString(ca_module, "Type");

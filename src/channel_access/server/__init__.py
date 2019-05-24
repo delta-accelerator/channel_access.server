@@ -3,24 +3,22 @@ import weakref
 import math
 from datetime import datetime, timedelta
 
+import channel_access.common as ca
 from . import cas
-from ca_client import ca
-
 from .cas import ExistsResponse, AttachResponse
-from ca_client.ca import Type, Status, Severity, AccessRights, Events
 
 
 
 def default_data(type, count):
     result = {
-        'status': Status.UDF,
-        'severity': Severity.INVALID,
+        'status': ca.Status.UDF,
+        'severity': ca.Severity.INVALID,
         'timestamp': datetime.utcnow()
     }
 
-    if type == Type.STRING:
+    if type == ca.Type.STRING:
         result['value'] = ''
-    elif type == Type.ENUM:
+    elif type == ca.Type.ENUM:
         result['value'] = 0
         result['enum_strings'] = ('',)
     else:
@@ -30,7 +28,7 @@ def default_data(type, count):
         result['display_limits'] = (0, 0)
         result['alarm_limits'] = (0, 0)
         result['warning_limits'] = (0, 0)
-        if type == Type.FLOAT or type == Type.DOUBLE:
+        if type == ca.Type.FLOAT or type == ca.Type.DOUBLE:
             result['precision'] = 0
 
     return result
@@ -67,7 +65,7 @@ class PV(object):
         """
         bool: Wether this PV is of enumeration type.
         """
-        return self._pv.type == Type.ENUM
+        return self._pv.type == ca.Type.ENUM
 
     @property
     def data(self):
@@ -262,7 +260,7 @@ class PVImpl(cas.PV):
         self._archive_deadband = archive_deadband
 
         self._data_lock = threading.Lock()
-        self._outstanding_events = Events.NONE
+        self._outstanding_events = ca.Events.NONE
         self._publish_events = False
         self._data = default_data(type, count)
         if data is not None:
@@ -282,9 +280,7 @@ class PVImpl(cas.PV):
                 result['value'] = result['value'].encode(self._encoding)
 
         if 'timestamp' in result:
-            posix = (result['timestamp'] - datetime(1970, 1, 1)) / timedelta(seconds=1)
-            frac, sec = math.modf(posix)
-            result['timestamp'] = (sec - ca.EPICS_EPOCH, int(frac * 1E9))
+            result['timestamp'] = ca.datetime_to_epics(result['timestamp'])
 
         return result
 
@@ -293,7 +289,7 @@ class PVImpl(cas.PV):
             value = value.decode(self._encoding)
 
         if timestamp is not None:
-            timestamp = datetime.utcfromtimestamp(ca.EPICS_EPOCH + timestamp[0] + timestamp[1] * 1E-9)
+            timestamp = ca.epics_to_datetime(timestamp)
 
         return value, timestamp
 
@@ -311,26 +307,26 @@ class PVImpl(cas.PV):
 
     # only call with data lock held
     def _calculate_status_severity(self, value):
-        status = Status.NO_ALARM
-        severity = Severity.NO_ALARM
+        status = ca.Status.NO_ALARM
+        severity = ca.Severity.NO_ALARM
         if isinstance(value, int) or isinstance(value, float):
             alarm_limits = self._data.get('alarm_limits')
             warn_limits = self._data.get('warning_limits')
 
             if warn_limits is not None and warn_limits[0] < warn_limits[1]:
                 if value < warn_limits[0]:
-                    severity = Severity.MINOR
-                    status = Status.LOW
+                    severity = ca.Severity.MINOR
+                    status = ca.Status.LOW
                 elif value > warn_limits[1]:
-                    severity = Severity.MINOR
-                    status = Status.HIGH
+                    severity = ca.Severity.MINOR
+                    status = ca.Status.HIGH
             if alarm_limits is not None and alarm_limits[0] < alarm_limits[1]:
                 if value < alarm_limits[0]:
-                    severity = Severity.MAJOR
-                    status = Status.LOLO
+                    severity = ca.Severity.MAJOR
+                    status = ca.Status.LOLO
                 elif value > alarm_limits[1]:
-                    severity = Severity.MAJOR
-                    status = Status.HIHI
+                    severity = ca.Severity.MAJOR
+                    status = ca.Status.HIHI
         return status, severity
 
     # only call with data lock held
@@ -343,7 +339,7 @@ class PVImpl(cas.PV):
             self._data['severity'] = severity
             changed = True
         if changed:
-            self._outstanding_events |= Events.ALARM
+            self._outstanding_events |= ca.Events.ALARM
 
     # only call with data lock held
     def _update_value(self, value):
@@ -356,18 +352,18 @@ class PVImpl(cas.PV):
             if isinstance(value, int) or isinstance(value, float):
                 diff = abs(value - old_value)
                 if diff >= self._value_deadband:
-                    self._outstanding_events |= Events.VALUE
+                    self._outstanding_events |= ca.Events.VALUE
                 if diff >= self._archive_deadband:
-                    self._outstanding_events |= Events.ARCHIVE
+                    self._outstanding_events |= ca.Events.ARCHIVE
             else:
-                self._outstanding_events |= Events.VALUE | Events.ARCHIVE
+                self._outstanding_events |= ca.Events.VALUE | ca.Events.ARCHIVE
         self._update_status_severity(status, severity)
 
     # only call with data lock held
     def _update_meta(self, key, value):
         if value != self._data.get(key):
             self._data[key] = value
-            self._outstanding_events |= Events.PROPERTY
+            self._outstanding_events |= ca.Events.PROPERTY
         if key.endswith('_limits'):
             self._update_value(self._data.get('value'))
 
@@ -377,7 +373,7 @@ class PVImpl(cas.PV):
         for key in ['precision', 'enum_strings', 'unit', 'ctrl_limits', 'display_limits', 'alarm_limits', 'warning_limits']:
             if key in data and data[key] != self._data.get(key):
                 self._data[key] = data[key]
-                self._outstanding_events |= Events.PROPERTY
+                self._outstanding_events |= ca.Events.PROPERTY
                 if key.endswith('_limits'):
                     limits_changed = True
 
@@ -400,8 +396,8 @@ class PVImpl(cas.PV):
     # only call with data lock held
     def _publish(self):
         events = self._outstanding_events
-        self._outstanding_events = Events.NONE
-        if self._publish_events and events != Events.NONE:
+        self._outstanding_events = ca.Events.NONE
+        if self._publish_events and events != ca.Events.NONE:
             self.postEvent(events, self._encode(self._data))
 
     def count(self):
