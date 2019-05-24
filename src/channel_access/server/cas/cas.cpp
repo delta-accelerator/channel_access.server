@@ -6,9 +6,7 @@
 #include <fdManager.h>
 
 #if CA_SERVER_NUMPY_SUPPORT
-#define PY_ARRAY_UNIQUE_SYMBOL CA_SERVER_ARRAY_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+#include "numpy.hpp"
 #endif
 
 #include "server.hpp"
