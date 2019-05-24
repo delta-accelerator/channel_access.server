@@ -1,6 +1,6 @@
 import os
 import sys
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, PEP420PackageFinder, Extension
 
 
 
@@ -21,16 +21,17 @@ epics_inc = os.path.join(epics_base, 'include')
 epics_lib = os.path.join(epics_base, 'lib', epics_host_arch)
 
 
-cas_extension = Extension('ca_server.cas',
+cas_path = 'src/channel_access/server/cas'
+cas_extension = Extension('channel_access.server.cas',
     language = 'c++',
-    sources = list(map(lambda s: os.path.join('src/ca_server/cas', s), [
+    sources = list(map(lambda s: os.path.join(cas_path, s), [
         'cas.cpp',
         'server.cpp',
         'pv.cpp',
         'convert.cpp'
     ])),
     include_dirs = [
-        'src/ca_server/cas',
+        cas_path,
         epics_inc,
         os.path.join(epics_inc, 'os', libsrc),
         os.path.join(epics_inc, 'compiler', compiler),
@@ -43,9 +44,9 @@ cas_extension = Extension('ca_server.cas',
 
 
 setup(
-    name = 'ca_server',
+    name = 'channel_access.server',
     description = 'Channel Access server library',
-    long_description = '',
+    long_description = 'Channel access server bindings',
     license='MIT',
     author = 'André Althaus',
     author_email = 'andre.althaus@tu-dortmund.de',
@@ -58,13 +59,13 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Scientific/Engineering'
     ],
-    keywords = 'epics ca cas',
-    packages = find_packages('src'),
+    keywords = 'epics ca cas channel_access',
+    packages = PEP420PackageFinder.find('src'),
     package_dir = { '': 'src' },
     ext_modules = [ cas_extension ],
     python_requires = '>= 3.4',
     setup_requires = [ 'setuptools_scm' ],
-    install_requires = [ 'ca_client' ],
+    install_requires = [ 'channel_access.common' ],
     extras_require = {
         'dev': [ 'tox', 'sphinx', 'pytest' ],
         'doc': [ 'sphinx' ],

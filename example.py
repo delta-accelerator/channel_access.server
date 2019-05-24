@@ -1,25 +1,14 @@
 import ca_server
+import numpy
 import time
 
 
 
 with ca_server.Server() as server:
-    pv = server.createPV('ALTH-test', ca_server.Type.FLOAT, data= {
-        'unit': 'mA',
-        'precision': 3,
-        'warning_limits': (-50, 50),
-        'alarm_limits': (-100, 100),
-        'control_limits': (-200, 200)
+    pv1 = server.createPV('ALTH-test1', ca_server.Type.STRING, data = {
+        'value': 'Hello'
     })
-
-    while True:
-        time.sleep(2)
-        pv.value = 10
-        time.sleep(2)
-        pv.value = 51
-        time.sleep(2)
-        pv.value = 101
-        time.sleep(2)
-        pv.value = -101
-        time.sleep(2)
-        pv.value = -51
+    pv2 = server.createPV('ALTH-test2', ca_server.Type.FLOAT, data = {
+        'value': 1.23
+    })
+    time.sleep(99999)

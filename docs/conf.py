@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../src'))
 
 from pkg_resources import get_distribution
 
-project = 'ca_server'
+project = 'channel_access.server'
 author = 'André Althaus'
 release = get_distribution(project).version
 version = '.'.join(release.split('.')[:2])

@@ -7,5 +7,5 @@ API Reference
 
 .. toctree::
 
-    ca_server.rst
-    ca_server.cas.rst
+    server.rst
+    server.cas.rst
