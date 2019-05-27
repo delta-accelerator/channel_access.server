@@ -37,7 +37,7 @@ def default_data(type, count):
 class PV(object):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self._pv = PVImpl(*args, **kwargs)
+        self._pv = _PV(*args, **kwargs)
 
     @property
     def name(self):
@@ -249,7 +249,7 @@ class PV(object):
             pv._publish()
 
 
-class PVImpl(cas.PV):
+class _PV(cas.PV):
     def __init__(self, name, type, count=1, data=None, value_deadband=0, archive_deadband=0, encoding='utf-8', io_handler=None):
         super().__init__(name)
         self._type = type
@@ -435,8 +435,8 @@ class Server(object):
     """
     def __init__(self):
         super().__init__()
-        self._server = ServerImpl()
-        self._thread = ServerThread()
+        self._server = _Server()
+        self._thread = _ServerThread()
 
         self._thread.start()
 
@@ -466,7 +466,7 @@ class Server(object):
         return self._server.createPV(*args, **kwargs)
 
 
-class ServerImpl(cas.Server):
+class _Server(cas.Server):
     def __init__(self, encoding='utf-8'):
         super().__init__()
         self._encoding = encoding
@@ -491,7 +491,7 @@ class ServerImpl(cas.Server):
         return pv
 
 
-class ServerThread(threading.Thread):
+class _ServerThread(threading.Thread):
     def __init__(self):
         super().__init__()
         self._should_stop = threading.Event()
