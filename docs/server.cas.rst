@@ -1,29 +1,14 @@
-channel_access.server.cas
-=========================
+Low-level cas binding
+=====================
 
 .. automodule:: channel_access.server.cas
     :members:
+    :undoc-members:
 
-    .. autoclass:: Trigger
+    .. autoclass:: Server
         :members:
         :undoc-members:
 
-    .. autoclass:: State
-        :members:
-        :undoc-members:
-
-    .. autoclass:: Status
-        :members:
-        :undoc-members:
-
-    .. autoclass:: Severity
-        :members:
-        :undoc-members:
-
-    .. autoclass:: AccessRights
-        :members:
-        :undoc-members:
-
-    .. autoclass:: FieldType
+    .. autoclass:: PV
         :members:
         :undoc-members:
