@@ -270,46 +270,42 @@ public:
 
         if (not PyArg_ParseTuple(args, "OO", &py_events, &py_values)) return nullptr;
 
+
         aitEnum type = aitEnumInvalid;
-        {
-            PyObject* fn = PyObject_GetAttrString(proxy->pv, "type");
-            if (fn) {
-                PyObject* result = PyObject_CallFunction(fn, nullptr);
-                if (PyErr_Occurred()) {
-                    PyErr_WriteUnraisable(fn);
-                    PyErr_Clear();
-                }
-                Py_DECREF(fn);
+        PyObject* fn = PyObject_GetAttrString(proxy->pv, "type");
+        if (not fn) return nullptr;
 
-                if (result) {
-                    to_ait_enum(result, type);
-                    Py_DECREF(result);
-                }
-            }
+        PyObject* result = PyObject_CallFunction(fn, nullptr);
+        Py_DECREF(fn);
+        if (not result) return nullptr;
+
+        bool success = to_ait_enum(result, type);
+        Py_DECREF(result);
+        if (not success) return nullptr;
+
+        if (type == aitEnumInvalid) return nullptr;
+
+
+        caServer const* server = static_cast<casPV*>(proxy)->getCAS();
+        if (not server) return nullptr;
+
+        casEventMask mask;
+        if (not to_event_mask(py_events, mask, *server)) return nullptr;
+
+        auto* values = new gdd{gddAppType_value};
+        if (not to_gdd(py_values, type, *values)) {
+            values->unreference();
+            return nullptr;
         }
 
-        if (type != aitEnumInvalid) {
-            casEventMask mask;
-            caServer const* server = static_cast<casPV*>(proxy)->getCAS();
-            if (server and to_event_mask(py_events, mask, *server)) {
-                auto* values = new gdd{gddAppType_value};
-
-                try {
-                    if (to_gdd(py_values, type, *values)) {
-                        static_cast<casPV*>(proxy)->postEvent(mask, *values);
-                    }
-                } catch (...) {
-                    values->unreference();
-                    throw;
-                }
-                values->unreference();
-            }
+        try {
+            static_cast<casPV*>(proxy)->postEvent(mask, *values);
+        } catch (...) {
+            values->unreference();
+            PyErr_SetString(PyExc_RuntimeError, "Could not post events");
+            return nullptr;
         }
-
-        if (PyErr_Occurred()) {
-            PyErr_WriteUnraisable(proxy->pv);
-            PyErr_Clear();
-        }
+        values->unreference();
 
         Py_RETURN_NONE;
     }
