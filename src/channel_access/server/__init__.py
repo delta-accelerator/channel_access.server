@@ -35,16 +35,17 @@ def default_data(type, count):
 
 
 class PV(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name, type, count=1, data=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
         super().__init__()
-        self._pv = _PV(*args, **kwargs)
+        self._name = name
+        self._pv = _PV(name, type, count, data, value_deadband, archive_deadband, encoding)
 
     @property
     def name(self):
         """
         str: The name of this PV.
         """
-        return self._pv.name
+        return self._name
 
     @property
     def count(self):
@@ -250,11 +251,12 @@ class PV(object):
 
 
 class _PV(cas.PV):
-    def __init__(self, name, type, count=1, data=None, value_deadband=0, archive_deadband=0, encoding='utf-8', io_handler=None):
+    def __init__(self, name, type, count, data, value_deadband, archive_deadband, encoding):
+        if encoding is not None:
+            name = name.encode(encoding)
         super().__init__(name)
         self._type = type
         self._count = count
-        self._io_handler = io_handler
         self._encoding = encoding
         self._value_deadband = value_deadband
         self._archive_deadband = archive_deadband
@@ -467,9 +469,8 @@ class Server(object):
 
 
 class _Server(cas.Server):
-    def __init__(self, encoding='utf-8'):
+    def __init__(self):
         super().__init__()
-        self._encoding = encoding
         self._pvs = weakref.WeakValueDictionary()
 
     def pvExistTest(self, client, pv_name):
@@ -483,11 +484,10 @@ class _Server(cas.Server):
             return AttachResponse.NOT_FOUND
         return pv._pv
 
-    def createPV(self, name, *args, **kwargs):
-        if self._encoding:
-            name = name.encode(self._encoding)
-        pv = PV(name, *args, **kwargs)
-        self._pvs[name] = pv
+    def createPV(self, *args, **kwargs):
+        pv = PV(*args, **kwargs)
+        # Store the raw bytes name in the dictionary
+        self._pvs[pv._pv.name()] = pv
         return pv
 
 

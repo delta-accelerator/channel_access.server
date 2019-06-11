@@ -28,6 +28,11 @@ public:
         : pv{pv}
     {}
 
+    static PyObject* name(PyObject* self, PyObject*)
+    {
+        return Py_BuildValue("y", reinterpret_cast<Pv*>(self)->name);
+    }
+
     char const* getName() const override
     {
         return reinterpret_cast<Pv*>(pv)->name;
@@ -408,6 +413,13 @@ PyObject* pv_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 }
 
 // we can't put these inside the PvProxy class
+PyDoc_STRVAR(name__doc__, R"(name()
+
+Return the name of the PV.
+
+Returns:
+    bytes: The name of the PV.
+)");
 PyDoc_STRVAR(destroy__doc__, R"(destroy()
 
 blub
@@ -442,6 +454,7 @@ blub
 )");
 
 PyMethodDef pv_methods[] = {
+    {"name",             static_cast<PyCFunction>(PvProxy::name),             METH_NOARGS,  name__doc__},
     {"destroy",          static_cast<PyCFunction>(PvProxy::destroy),          METH_NOARGS,  destroy__doc__},
     {"type",             static_cast<PyCFunction>(PvProxy::type),             METH_NOARGS,  type__doc__},
     {"count",            static_cast<PyCFunction>(PvProxy::count),            METH_NOARGS,  count__doc__},
@@ -452,13 +465,7 @@ PyMethodDef pv_methods[] = {
     {"interestDelete",   static_cast<PyCFunction>(PvProxy::interestDelete),   METH_NOARGS,  interestDelete__doc__},
     {nullptr}
 };
-
-PyDoc_STRVAR(name__doc__, R"(getName()
-
-blub
-)");
 PyMemberDef pv_members[] = {
-    {"name",  T_STRING, offsetof(Pv, name), 1, name__doc__}, // READONLY
     {nullptr}
 };
 
