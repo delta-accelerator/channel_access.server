@@ -38,6 +38,7 @@ def cacmd(args):
         'EPICS_CA_REPEATER_PORT': EPICS_CA_REPEATER_PORT
     }
     return subprocess.check_output(args,
+        stdin=subprocess.DEVNULL,
         env=environment,
         universal_newlines=True).strip()
 
