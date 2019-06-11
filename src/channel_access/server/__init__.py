@@ -10,6 +10,16 @@ from .cas import ExistsResponse, AttachResponse
 
 
 def default_data(type, count):
+    """
+    Return the default data dictionary for new PVs.
+
+    Args:
+        type (:class:`channel_access.common.Type`): Type of the PV.
+        count (int): Number of elements of the PV.
+
+    Returns:
+        dict: Data dictionary.
+    """
     result = {
         'status': ca.Status.UDF,
         'severity': ca.Severity.INVALID,
@@ -35,7 +45,77 @@ def default_data(type, count):
 
 
 class PV(object):
+    """
+    A Channel Access PV.
+
+    This class gives thread-safe access to a channel access PV.
+    Always create PV objects through :meth:`Server.createPV()`.
+
+    The following keys can occur in a data dictionary:
+
+    value
+        Data value, type depends on the native type. For integer types
+        and enum types this is ``int``, for floating point types this is ``float``.
+        For string types this is ``bytes`` or ``str`` depending on the
+        ``encondig`` parameter.
+        For arrays this is a sequence of the corresponding values.
+
+    status
+        Value status, one of :class:`channel_access.common.Status`.
+
+    severity
+        Value severity, one of :class:`channel_access.common.Severity`.
+
+    timestamp
+        An aware datetime representing the point in time the value was
+        changed.
+
+    enum_strings
+        Tuple with the strings corresponding to the enumeration values.
+        The length of the tuple must be equal to :data:`PV.count`.
+        The entries are ``bytes`` or ``str`` depending on the
+        ``encondig`` parameter.
+
+    unit
+        String representing the physical unit of the value. The type is
+        ``bytes`` or ``str`` depending on the ``encondig`` parameter.
+
+    precision
+        Integer representing the number of relevant decimal places.
+
+    display_limits
+        A tuple ``(minimum, maximum)`` representing the range of values
+        for a user interface.
+
+    control_limits
+        A tuple ``(minimum, maximum)`` representing the range of values
+        accepted for a put request by the server.
+
+    warning_limits
+        A tuple ``(minimum, maximum)``. When the value lies outside of the
+        range of values the status becomes :class:`channel_access.common.Status.LOW` or :class:`channel_access.common.Status.HIGH`.
+
+    alarm_limits
+        A tuple ``(minimum, maximum)``. When the value lies outside of the
+        range of values the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
+    """
     def __init__(self, name, type, count=1, data=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
+        """
+        Args:
+            name (str, bytes): Name of the PV.
+                If ``encoding`` is ``None`` this must be raw bytes.
+            type (:class:`Type`): The PV type.
+            data (dict): Data dictionary with the initial attributes. These
+                will override the default attributes.
+            value_deadband (int, float): If the value changes more than this
+                deadband a value event is fired. This is only used for
+                integer and floating point PVs.
+            archive_deadband (int, float): If the value changes more than this
+                deadband an archive event is fired. This is only used for
+                integer and floating point PVs.
+            encoding (str): The encoding used for the PV name and string
+                attributes. If ``None`` these values must be bytes.
+        """
         super().__init__()
         self._name = name
         self._pv = _PV(name, type, count, data, value_deadband, archive_deadband, encoding)
@@ -57,7 +137,7 @@ class PV(object):
     @property
     def type(self):
         """
-        :class:`FieldType`: The data type of this PV.
+        :class:`channel_access.common.Type`: The type of this PV.
         """
         return self._pv.type()
 
@@ -79,13 +159,19 @@ class PV(object):
             return self._pv._data.copy()
 
     def update_data(self, data):
+        """
+        Update the values in the data dictionary.
+
+        Args:
+            data (dict): A data dictionary.
+        """
         with self._pv._data_lock:
             self._pv._update_data(data)
 
     @property
     def timestamp(self):
         """
-        datetime: The timestamp in UTC of the last received data or ``None`` if it's unknown.
+        datetime: The timestamp in UTC of the last time value has changed.
         """
         with self._pv._data_lock:
             return self._pv._data.get('timestamp')
@@ -93,9 +179,9 @@ class PV(object):
     @property
     def value(self):
         """
-        The current value of the PV or ``None`` if it's unknown.
+        The current value of the PV.
 
-        This is writeable and calls ``put(value, block=False)``.
+        This is writeable and updates the value and timestamp.
         """
         with self._pv._data_lock:
             return self._pv._data.get('value')
@@ -111,7 +197,9 @@ class PV(object):
     @property
     def status(self):
         """
-        :class:`Status`: The current status or ``None`` if it's unknown.
+        :class:`channel_access.common.Status`: The current status.
+
+        This is writeable and updates the status.
         """
         with self._pv._data_lock:
             return self._pv._data.get('status')
@@ -126,7 +214,9 @@ class PV(object):
     @property
     def severity(self):
         """
-        :class:`Severity`: The current severity or ``None`` if it's unknown.
+        :class:`channel_access.common.Severity`: The current severity.
+
+        This is writeable and updates the severity.
         """
         with self._pv._data_lock:
             return self._pv._data.get('severity')
@@ -139,6 +229,13 @@ class PV(object):
             pv._publish()
 
     def update_status_severity(self, status, severity):
+        """
+        Update the status and severity.
+
+        Args:
+            status (:class:`channel_access.common.Status`): The new status.
+            severity (:class:`channel_access.common.Severity`): The new severity.
+        """
         pv = self._pv
         with pv._data_lock:
             pv._update_status_severity(status, value)
@@ -147,7 +244,9 @@ class PV(object):
     @property
     def precision(self):
         """
-        int: The current precision or ``None`` if it's unknown.
+        int: The current precision.
+
+        This is writeable and update the precision.
         """
         with self._pv._data_lock:
             return self._pv._data.get('precision')
@@ -162,7 +261,11 @@ class PV(object):
     @property
     def unit(self):
         """
-        str|bytes: The current unit or ``None`` if it's unknown.
+        str|bytes: The current unit.
+
+        The type depends on the ``encoding`` parameter.
+
+        This is writeable and updates the unit.
         """
         with self._pv._data_lock:
             return self._pv._data.get('unit')
@@ -177,13 +280,19 @@ class PV(object):
     @property
     def enum_strings(self):
         """
-        tuple(str|bytes): The current enumeration strings or ``None`` if it's unknown.
+        tuple(str|bytes): The current enumeration strings.
+
+        The type depends on the ``encoding`` parameter.
+
+        This is writeable and updates the enumeration strings. The length
+        of the tuple must be equal to the ``count`` parameter.
         """
         with self._pv._data_lock:
             return self._pv._data.get('enum_strings')
 
     @enum_strings.setter
     def enum_strings(self, value):
+        assert(len(value) >= self.count)
         pv = self._pv
         with pv._data_lock:
             pv._update_meta('enum_strings', value)
@@ -192,13 +301,16 @@ class PV(object):
     @property
     def display_limits(self):
         """
-        tuple(float, float): The current display limits or ``None`` if they are unknown.
+        tuple(float, float): The current display limits.
+
+        This is writeable and updates the display limits:
         """
         with self._pv._data_lock:
             return self._pv._data.get('display_limits')
 
     @display_limits.setter
     def display_limits(self, value):
+        assert(len(value) >= 2)
         pv = self._pv
         with pv._data_lock:
             pv._update_meta('display_limits', value)
@@ -207,13 +319,16 @@ class PV(object):
     @property
     def control_limits(self):
         """
-        tuple(float, float): The control display limits or ``None`` if they are unknown.
+        tuple(float, float): The control display limits.
+
+        This is writeable and updates the control display limits.
         """
         with self._pv._data_lock:
             return self._pv._data.get('control_limits')
 
     @control_limits.setter
     def control_limits(self, value):
+        assert(len(value) >= 2)
         pv = self._pv
         with pv._data_lock:
             pv._update_meta('control_limits', value)
@@ -222,13 +337,16 @@ class PV(object):
     @property
     def warning_limits(self):
         """
-        tuple(float, float): The warning display limits or ``None`` if they are unknown.
+        tuple(float, float): The warning display limits.
+
+        This is writeable and updates the warning limits.
         """
         with self._pv._data_lock:
             return self._pv._data.get('warning_limits')
 
     @warning_limits.setter
     def warning_limits(self, value):
+        assert(len(value) >= 2)
         pv = self._pv
         with pv._data_lock:
             pv._update_meta('warning_limits', value)
@@ -237,13 +355,16 @@ class PV(object):
     @property
     def alarm_limits(self):
         """
-        tuple(float, float): The alarm display limits or ``None`` if they are unknown.
+        tuple(float, float): The alarm display limits.
+
+        This is writeable and updates the alarm limits.
         """
         with self._pv._data_lock:
             return self._pv._data.get('alarm_limits')
 
     @alarm_limits.setter
     def alarm_limits(self, value):
+        assert(len(value) >= 2)
         pv = self._pv
         with pv._data_lock:
             pv._update_meta('alarm_limits', value)
@@ -251,6 +372,11 @@ class PV(object):
 
 
 class _PV(cas.PV):
+    """
+    PV implementation.
+
+    This class handles all requests from the underlying binding class.
+    """
     def __init__(self, name, type, count, data, value_deadband, archive_deadband, encoding):
         if encoding is not None:
             name = name.encode(encoding)
@@ -434,6 +560,17 @@ class _PV(cas.PV):
 class Server(object):
     """
     Channel Access server.
+
+    On creation this class creates a server thread which processes
+    channel access messages.
+
+    The :meth:`shutdown()` method must be called to stop the server.
+
+    This class implements the context manager protocol. This automatically
+    shuts the server down at the end of the with-statement::
+
+        with cas.Server() as server:
+            pass
     """
     def __init__(self):
         super().__init__()
@@ -451,6 +588,8 @@ class Server(object):
     def shutdown(self):
         """
         Shutdown the channel access server.
+
+        After this is called no other methods can be called.
         """
         self._thread.stop()
         self._thread.join()
@@ -462,6 +601,13 @@ class Server(object):
 
         All arguments are forwarded to the :class:`PV` class.
 
+        The server does not hold a reference to the returned PV so it
+        can be collected if it is no longer used. It is the  responsibility
+        of the user to keep the PV objects alive as long as they are needed.
+
+        If a PV with an already existing name is created the server will
+        use the new PV and ignore the other one.
+
         Returns:
             :class:`PV`: A new PV object.
         """
@@ -469,6 +615,12 @@ class Server(object):
 
 
 class _Server(cas.Server):
+    """
+    Server implementation.
+
+    This stores the created PVs in a weak dictionary and answers
+    the request using it.
+    """
     def __init__(self):
         super().__init__()
         self._pvs = weakref.WeakValueDictionary()
@@ -492,6 +644,9 @@ class _Server(cas.Server):
 
 
 class _ServerThread(threading.Thread):
+    """
+    A thread calling cas.process() until the ``_should_stop`` event is set.
+    """
     def __init__(self):
         super().__init__()
         self._should_stop = threading.Event()

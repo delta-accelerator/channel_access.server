@@ -149,11 +149,30 @@ PyObject* server_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
 PyDoc_STRVAR(pvExistTest__doc__, R"(pvExistTest(address, name)
 
-Test if PV exists
+Return wether/where the PV ``name`` exists.
+
+Args:
+    address (tuple): A tuple ``(ip, port)`` which identifies a client.
+        The client IP address is encoded as a 32bit integer.
+    name (bytes): The name of the requested PV.
+
+Returns:
+    An :class:`ExistsResponse` value indicating the search result or a
+    tuple ``(ip, port)`` indicating a server where the PV exists.
 )");
 PyDoc_STRVAR(pvAttach__doc__, R"(pvAttach(name)
 
-Create PV handler.
+Return a PV handler object for ``name``.
+
+If a :class:`PV` instance is returned then the server will hold
+a reference to it as long as it is needed.
+
+Args:
+    name (bytes): The name of the requested PV.
+
+Returns:
+    An :class:`AttachResponse` value indicating the reason why a handler object
+    could not be created or a :class:`PV` instance for the requested PV.
 )");
 
 PyMethodDef server_methods[] = {
@@ -168,6 +187,12 @@ PyMemberDef server_members[] = {
 
 PyDoc_STRVAR(server__doc__, R"(
 Server class.
+
+This class handles requests for PV connections.
+
+When creating a channel access server a user defined class should derive
+from this class and implement the methods :meth:`pvExistTest` and
+:meth:`pvAttach`. The default implementations reject all requests.
 )");
 PyTypeObject server_type = {
     PyVarObject_HEAD_INIT(nullptr, 0)

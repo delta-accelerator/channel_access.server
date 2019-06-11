@@ -414,39 +414,85 @@ PyDoc_STRVAR(name__doc__, R"(name()
 Return the name of the PV.
 
 Returns:
-    bytes: The name of the PV.
+    bytes: The name of the PV given at initialization.
 )");
 PyDoc_STRVAR(destroy__doc__, R"(destroy()
 
-blub
+Destroy the PV.
+
+Request from the server when the PV handler object is no longer
+needed.
 )");
 PyDoc_STRVAR(type__doc__, R"(type()
 
-blub
+Return the type of the PV.
+
+This is called from the server.
+
+Returns:
+    :class:`channel_access.common.Type`: Type of the PV.
 )");
 PyDoc_STRVAR(count__doc__, R"(count()
 
-blub
+Return the number of elements.
+
+This is called from the server.
+
+Returns:
+    int: Number of elements.
 )");
 PyDoc_STRVAR(read__doc__, R"(read()
 
-blub
-)");
-PyDoc_STRVAR(write__doc__, R"(write()
+Retreive the attributes of the PV.
 
-blub
-)");
-PyDoc_STRVAR(postEvent__doc__, R"(postEvent()
+This is called from the server when a get request is processed.
 
-blub
+Returns:
+    dict: An attribute dictionary with all PV attributes.
+)");
+PyDoc_STRVAR(write__doc__, R"(write(value, timestamp)
+
+Set the value of the PV.
+
+This is called from the server when a put request is processed.
+
+Args:
+    value: The new value. The type depends on the PV type.
+    timestamp: An epics timestamp tuple.
+
+Returns:
+    bool: ``True`` if the write was successful, ``False`` otherwise.
+)");
+PyDoc_STRVAR(postEvent__doc__, R"(postEvent(event_mask, attributes)
+
+Post events to clients.
+
+This should be called when any attributes change and events are requested
+(:meth:`interestRegister()`). Depending on which attributes changed the
+``event_mask`` should be set accordingly.
+
+Args:
+    event_mask (:class:`channel_access.common.Events`): This mask describes
+        the events to post.
+    attributes (dict): An attribute dictionary with the attribute values for the events.
+
 )");
 PyDoc_STRVAR(interestRegister__doc__, R"(interestRegister()
 
-blub
+Inform server about changes.
+
+Request from the server that events should be posted
+when attributes change.
+
+Returns:
+    bool: ``True`` if the request was successful, ``False`` otherwise.
 )");
 PyDoc_STRVAR(interestDelete__doc__, R"(interestDelete()
 
-blub
+Don't inform server about changes.
+
+Request from the server that events should not be posted any more
+when attributes change.
 )");
 
 PyMethodDef pv_methods[] = {
@@ -465,10 +511,73 @@ PyMemberDef pv_members[] = {
     {nullptr}
 };
 
-PyDoc_STRVAR(pv__doc__, R"(
-server pv class
+PyDoc_STRVAR(pv__doc__, R"(PV(name)
+PV handler class.
 
-blub
+A user defined class should derive from this class and override
+the appropiate methods to inform the server about the properties
+of the PV and handle requests for it. The default implementations
+represent a scalar string PV which rejects all read/write access.
+
+The following keys can occur in an attribute dictionary:
+
+    value
+        Data value, type depends on the PV type. For integer types
+        and enum types this is ``int``, for floating point types this
+        is ``float``. For string types this is ``bytes``.
+        For arrays this is a sequence of the corresponding values.
+
+    status
+        Value status, one of :class:`channel_access.common.Status`.
+
+    severity
+        Value severity, one of :class:`channel_access.common.Severity`.
+
+    timestamp
+        An epics timestamp tuple corresponding to the last time the
+        value changed.
+
+        See also: :meth:`channel_access.common.datetime_to_epics` and
+        :meth:`channel_access.common.epics_to_datetime`.
+
+    enum_strings
+        Tuple with the strings corresponding to the enumeration values.
+        The length of the tuple must be equal to :meth:``PV.count()``.
+        The entries are ``bytes``.
+
+    unit
+        String representing the physical unit of the value. The type is
+        ``bytes``.
+
+    precision
+        Integer representing the number of relevant decimal places.
+        This is only used for floating point types.
+
+    display_limits
+        A tuple ``(minimum, maximum)`` representing the range of values
+        for a user interface. This is only used for numerical types.
+
+    control_limits
+        A tuple ``(minimum, maximum)`` representing the range of values
+        accepted for a put request by the server. This is only used for
+        numerical types.
+
+    warning_limits
+        A tuple ``(minimum, maximum)``. When the value lies outside of the
+        range this is a warning condition.
+        Typically the status becomes :class:`channel_access.common.Status.LOW` or :class:`channel_access.common.Status.HIGH`.
+        This is only used for numerical types.
+
+    alarm_limits
+        A tuple ``(minimum, maximum)``. When the value lies outside of the
+        range this is an alarm condition.
+        Typically the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
+        This is only used for numerical types.
+
+Args:
+    name (bytes): The cannocial name of the PV. If a server serves the
+        same PV under different names (aliases), this should be the
+        main name.
 )");
 PyTypeObject pv_type = {
     PyVarObject_HEAD_INIT(NULL, 0)

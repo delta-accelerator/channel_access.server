@@ -53,7 +53,7 @@ PyModuleDef module = {
 };
 
 PyDoc_STRVAR(exists__doc__, R"(
-Return value for the :meth:`PV.exists()` method.
+Return value for the :meth:`Server.pvExistTest()` method.
 )");
 PyObject* add_exists(PyObject* module, PyObject* enum_class)
 {
@@ -79,7 +79,7 @@ PyObject* add_exists(PyObject* module, PyObject* enum_class)
 }
 
 PyDoc_STRVAR(attach__doc__, R"(
-Return value for the :meth:`PV.attach()` method.
+Return value for the :meth:`Server.pvAttach()` method.
 )");
 PyObject* add_attach(PyObject* module, PyObject* enum_class)
 {
