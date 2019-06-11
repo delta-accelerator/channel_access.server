@@ -260,7 +260,7 @@ public:
 
     static PyObject* write(PyObject* self, PyObject* args)
     {
-        Py_RETURN_NONE;
+        Py_RETURN_FALSE;
     }
 
     static PyObject* postEvent(PyObject* self, PyObject* args)
@@ -341,7 +341,7 @@ public:
 
     static PyObject* interestRegister(PyObject* self, PyObject*)
     {
-        Py_RETURN_NONE;
+        Py_RETURN_FALSE;
     }
 
     virtual void interestDelete() override
