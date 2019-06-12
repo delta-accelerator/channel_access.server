@@ -188,8 +188,14 @@ class PV(object):
         """
         with self._pv._attributes_lock:
             # We need a copy here for thread-safety. All keys and values
-            # are immutable so a shallow copy is enough
-            return self._pv._attributes.copy()
+            # are immutable so a shallow copy is enough.
+            result = self._pv._attributes.copy()
+            # If the value is a numpy array whe have to create a copy
+            # because numpy arrays are not immutable.
+            value = result.get('value')
+            if numpy and isinstance(value, numpy.ndarray):
+                result['value'] = numpy.copy(value)
+        return result
 
     @attributes.setter
     def attributes(self, attributes):
@@ -212,7 +218,12 @@ class PV(object):
         This is writeable and updates the value and timestamp.
         """
         with self._pv._attributes_lock:
-            return self._pv._attributes.get('value')
+            value = self._pv._attributes.get('value')
+            # If the value is a numpy array whe have to create a copy
+            # because numpy arrays are not immutable.
+            if numpy and isinstance(value, numpy.ndarray):
+                value = numpy.copy(value)
+        return value
 
     @value.setter
     def value(self, value):
