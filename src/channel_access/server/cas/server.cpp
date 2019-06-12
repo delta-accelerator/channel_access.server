@@ -59,8 +59,6 @@ public:
 
     static PyObject* pvExistTest(PyObject* self, PyObject* args)
     {
-        Server* server = reinterpret_cast<Server*>(self);
-
         unsigned long host;
         unsigned short port;
         char const* pv_name;
@@ -99,15 +97,11 @@ public:
 
     static PyObject* pvAttach(PyObject* self, PyObject* args)
     {
-        Server* server = reinterpret_cast<Server*>(self);
-
         char const* pv_name;
         if (not PyArg_ParseTuple(args, "y:pvAttach", &pv_name)) return nullptr;
 
         return PyObject_GetAttrString(cas::enum_attach, "NOT_FOUND");
     }
-
-    //virtual void show(unsigned level) const override;
 
 private:
     PyObject* server;
@@ -117,7 +111,6 @@ private:
 
 int server_init(PyObject* self, PyObject* args, PyObject* kwds)
 {
-    Server* server = reinterpret_cast<Server*>(self);
     return 0;
 }
 
