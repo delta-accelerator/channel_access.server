@@ -17,8 +17,17 @@ Example
 -------
 This example shows a simple server with a PV counting up:
 
-.. literalinclude:: ../examples/simple.py
-    :language: python
+.. code:: python
+
+    import time
+    import channel_access.common as ca
+    import channel_access.server as cas
+
+    with cas.Server() as server:
+        pv = server.createPV('CAS:Test', ca.Type.LONG)
+        while True:
+            pv.value += 1
+            time.sleep(1.0)
 
 Documentation
 -------------

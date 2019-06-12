@@ -43,10 +43,14 @@ cas_extension = Extension('channel_access.server.cas',
 )
 
 
+with open('README.rst', encoding='utf-8') as f:
+    long_description = f.read()
+
+
 setup(
     name = 'channel_access.server',
     description = 'Channel Access server library',
-    long_description = 'Channel access server bindings',
+    long_description = long_description,
     license='MIT',
     author = 'André Althaus',
     author_email = 'andre.althaus@tu-dortmund.de',
