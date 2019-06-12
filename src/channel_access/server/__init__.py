@@ -446,37 +446,68 @@ class _PV(cas.PV):
 
     # only call with attributes lock held
     def _constrain_value(self, value):
-        """ Constrain a value to the control limits range """
+        """ Constrain a value to the control limits range. """
         if self._type != ca.Type.STRING:
             ctrl_limits = self._attributes.get('control_limits')
 
             if ctrl_limits is not None and ctrl_limits[0] < ctrl_limits[1]:
-                if value < ctrl_limits[0]:
-                    return ctrl_limits[0]
-                elif value > ctrl_limits[1]:
-                    return ctrl_limits[1]
+                clamp = lambda v: max(min(v, ctrl_limits[1]), ctrl_limits[0])
+                if self._count == 1:
+                    return clamp(value)
+                else:
+                    return tuple(map(clamp, value))
         return value
 
     # only call with attributes lock held
     def _calculate_status_severity(self, value):
+        """ Calculate status and severity values using warning and alarm limits. """
         status = ca.Status.NO_ALARM
         severity = ca.Severity.NO_ALARM
-        if isinstance(value, int) or isinstance(value, float):
+        if self._type != ca.Type.STRING:
             alarm_limits = self._attributes.get('alarm_limits')
             warn_limits = self._attributes.get('warning_limits')
 
+            if self._count == 1:
+                lowest = value
+                highest = value
+            else:
+                # For arrays use the extreme values
+                lowest = min(value)
+                highest = max(value)
+
             if warn_limits is not None and warn_limits[0] < warn_limits[1]:
-                if value < warn_limits[0]:
+                if lowest < warn_limits[0] and highest > warn_limits[1]:
+                    # If both limits are violated (can happen in arrays)
+                    # the violation with the highest absolute difference
+                    # is used
+                    if abs(lowest - warn_limits[0]) > abs(highest - warn_limits[1]):
+                        severity = ca.Severity.MINOR
+                        status = ca.Status.LOW
+                    else:
+                        severity = ca.Severity.MINOR
+                        status = ca.Status.HIGH
+                elif lowest < warn_limits[0]:
                     severity = ca.Severity.MINOR
                     status = ca.Status.LOW
-                elif value > warn_limits[1]:
+                elif highest > warn_limits[1]:
                     severity = ca.Severity.MINOR
                     status = ca.Status.HIGH
+
             if alarm_limits is not None and alarm_limits[0] < alarm_limits[1]:
-                if value < alarm_limits[0]:
+                if lowest < alarm_limits[0] and highest > alarm_limits[1]:
+                    # If both limits are violated (can happen in arrays)
+                    # the violation with the highest absolute difference
+                    # is used
+                    if abs(lowest - alarm_limits[0]) > abs(highest - alarm_limits[1]):
+                        severity = ca.Severity.MAJOR
+                        status = ca.Status.LOLO
+                    else:
+                        severity = ca.Severity.MAJOR
+                        status = ca.Status.HIHI
+                elif lowest < alarm_limits[0]:
                     severity = ca.Severity.MAJOR
                     status = ca.Status.LOLO
-                elif value > alarm_limits[1]:
+                elif highest > alarm_limits[1]:
                     severity = ca.Severity.MAJOR
                     status = ca.Status.HIHI
         return status, severity
@@ -490,8 +521,13 @@ class _PV(cas.PV):
         old_value = self._attributes.get('value')
         if value != old_value:
             self._attributes['value'] = value
-            if isinstance(value, int) or isinstance(value, float):
-                diff = abs(value - old_value)
+            if self._type not in (ca.Type.STRING, ca.Type.ENUM):
+                if self._count == 1:
+                    diff = abs(value - old_value)
+                else:
+                    # Look at the maximum difference between the old values
+                    # and the new ones.
+                    diff = max(map(lambda x: abs(x[0] - x[1]), zip(value, old_value)))
                 if diff >= self._value_deadband:
                     self._outstanding_events |= ca.Events.VALUE
                 if diff >= self._archive_deadband:
