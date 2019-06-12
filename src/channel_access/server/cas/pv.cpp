@@ -544,38 +544,38 @@ The following keys can occur in an attributes dictionary:
         Tuple with the strings corresponding to the enumeration values.
         The length of the tuple must be equal to :meth:``PV.count()``.
         The entries are ``bytes``.
-        This is only used for enumeration types.
+        This is only used for enum PVs.
 
     unit
         String representing the physical unit of the value. The type is
         ``bytes``.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
 
     precision
         Integer representing the number of relevant decimal places.
-        This is only used for floating point types.
+        This is only used for floating point PVs.
 
     display_limits
         A tuple ``(minimum, maximum)`` representing the range of values
         for a user interface.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
 
     control_limits
         A tuple ``(minimum, maximum)`` representing the range of values
         accepted for a put request by the server.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
 
     warning_limits
         A tuple ``(minimum, maximum)``. When any value lies outside of the
         range this is a warning condition.
         Typically the status becomes :class:`channel_access.common.Status.LOW` or :class:`channel_access.common.Status.HIGH`.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
 
     alarm_limits
         A tuple ``(minimum, maximum)``. When any value lies outside of the
         range this is an alarm condition.
         Typically the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
 
 Args:
     name (bytes): The cannocial name of the PV. If a server serves the

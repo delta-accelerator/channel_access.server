@@ -74,26 +74,26 @@ class PV(object):
         The length of the tuple must be equal to :data:`PV.count`.
         The entries are ``bytes`` or ``str`` depending on the
         ``encondig`` parameter.
-        This is only used for enum types.
+        This is only used for enum PVs.
 
     unit
         String representing the physical unit of the value. The type is
         ``bytes`` or ``str`` depending on the ``encondig`` parameter.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
 
     precision
         Integer representing the number of relevant decimal places.
-        This is only used for floating point types.
+        This is only used for floating point PVs.
 
     display_limits
         A tuple ``(minimum, maximum)`` representing the range of values
         for a user interface.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
 
     control_limits
         A tuple ``(minimum, maximum)`` representing the range of values
         accepted for a put request by the server.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
 
     warning_limits
         A tuple ``(minimum, maximum)``. When any value lies outside of the
@@ -103,7 +103,7 @@ class PV(object):
     alarm_limits
         A tuple ``(minimum, maximum)``. When any value lies outside of the
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
-        This is only used for numerical types.
+        This is only used for numerical PVs.
     """
     def __init__(self, name, type, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
         """
@@ -113,12 +113,12 @@ class PV(object):
             type (:class:`channel_access.common.Type`): The PV type.
             attributes (dict): Attributes dictionary with the initial attributes.
                 These will override the default attributes.
-            value_deadband (int, float): If any value changes more than this
-                deadband a value event is fired. This is only used for
-                integer and floating point PVs.
-            archive_deadband (int, float): If any value changes more than this
-                deadband an archive event is fired. This is only used for
-                integer and floating point PVs.
+            value_deadband (int|float): If any value changes more than this
+                deadband a value event is fired.
+                This is only used for numerical PVs.
+            archive_deadband (int|float): If any value changes more than this
+                deadband an archive event is fired.
+                This is only used for numerical PVs.
             encoding (str): The encoding used for the PV name and string
                 attributes. If ``None`` these values must be bytes.
         """
