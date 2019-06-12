@@ -403,6 +403,7 @@ class _PV(cas.PV):
             self._update_attributes(attributes)
 
     def _encode(self, attributes):
+        """ Convert a high-level attributes dictionary to a low-level one. """
         result = attributes.copy()
 
         if self._encoding is not None:
@@ -421,6 +422,7 @@ class _PV(cas.PV):
         return result
 
     def _decode(self, value, timestamp=None):
+        """ Convert a low-level value and timestamp to high-level ones. """
         if self._encoding is not None and self._type == ca.Type.STRING:
             value = value.decode(self._encoding)
 
@@ -430,7 +432,21 @@ class _PV(cas.PV):
         return value, timestamp
 
     # only call with attributes lock held
+    def _update_status_severity(self, status, severity):
+        """ Update the status and serverity. """
+        changed = False
+        if status != self._attributes.get('status'):
+            self._attributes['status'] = status
+            changed = True
+        if severity != self._attributes.get('severity'):
+            self._attributes['severity'] = severity
+            changed = True
+        if changed:
+            self._outstanding_events |= ca.Events.ALARM
+
+    # only call with attributes lock held
     def _constrain_value(self, value):
+        """ Constrain a value to the control limits range """
         if self._type != ca.Type.STRING:
             ctrl_limits = self._attributes.get('control_limits')
 
@@ -466,19 +482,8 @@ class _PV(cas.PV):
         return status, severity
 
     # only call with attributes lock held
-    def _update_status_severity(self, status, severity):
-        changed = False
-        if status != self._attributes.get('status'):
-            self._attributes['status'] = status
-            changed = True
-        if severity != self._attributes.get('severity'):
-            self._attributes['severity'] = severity
-            changed = True
-        if changed:
-            self._outstanding_events |= ca.Events.ALARM
-
-    # only call with attributes lock held
     def _update_value(self, value):
+        """ Update the value and depending on it the status and severity. """
         value = self._constrain_value(value)
         status, severity = self._calculate_status_severity(value)
 
@@ -497,14 +502,17 @@ class _PV(cas.PV):
 
     # only call with attributes lock held
     def _update_meta(self, key, value):
+        """ Update the meta data attributes. """
         if value != self._attributes.get(key):
             self._attributes[key] = value
             self._outstanding_events |= ca.Events.PROPERTY
         if key.endswith('_limits'):
+            # If the limits change we might need to change the value accordingly
             self._update_value(self._attributes.get('value'))
 
     # only call with attributes lock held
     def _update_attributes(self, attributes):
+        """ Update attributes using an attributes dictionary. """
         limits_changed = False
         for key in ['precision', 'enum_strings', 'unit', 'ctrl_limits', 'display_limits', 'alarm_limits', 'warning_limits']:
             if key in attributes and attributes[key] != self._attributes.get(key):
@@ -513,6 +521,8 @@ class _PV(cas.PV):
                 if key.endswith('_limits'):
                     limits_changed = True
 
+        # Change status and serverity first beacuse a value change might
+        # override them
         if 'status' in attributes or 'severity' in attributes:
             if 'status' in attributes:
                 status = attributes['status']
@@ -527,10 +537,12 @@ class _PV(cas.PV):
         if 'value' in attributes:
             self._update_value(attributes['value'])
         elif limits_changed:
+            # If the limits change we might need to change the value accordingly
             self._update_value(self._attributes.get('value'))
 
     # only call with attributes lock held
     def _publish(self):
+        """ Post events if necessary. """
         events = self._outstanding_events
         self._outstanding_events = ca.Events.NONE
         if self._publish_events and events != ca.Events.NONE:
