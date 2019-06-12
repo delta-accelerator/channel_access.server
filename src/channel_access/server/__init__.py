@@ -412,7 +412,7 @@ class _PV(cas.PV):
             if 'enum_strings' in result:
                 result['enum_strings'] = tuple(x.encode(self._encoding) for x in result['enum_strings'])
 
-            if 'value' in result and isinstance(result['value'], str):
+            if 'value' in result and self._type == ca.Type.STRING:
                 result['value'] = result['value'].encode(self._encoding)
 
         if 'timestamp' in result:
@@ -421,7 +421,7 @@ class _PV(cas.PV):
         return result
 
     def _decode(self, value, timestamp=None):
-        if self._encoding is not None and isinstance(value, bytes):
+        if self._encoding is not None and self._type == ca.Type.STRING:
             value = value.decode(self._encoding)
 
         if timestamp is not None:
@@ -431,7 +431,7 @@ class _PV(cas.PV):
 
     # only call with attributes lock held
     def _constrain_value(self, value):
-        if isinstance(value, int) or isinstance(value, float):
+        if self._type != ca.Type.STRING:
             ctrl_limits = self._attributes.get('control_limits')
 
             if ctrl_limits is not None and ctrl_limits[0] < ctrl_limits[1]:
