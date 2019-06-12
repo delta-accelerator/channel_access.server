@@ -9,16 +9,16 @@ from .cas import ExistsResponse, AttachResponse
 
 
 
-def default_data(type, count):
+def default_attributes(type, count):
     """
-    Return the default data dictionary for new PVs.
+    Return the default attributes dictionary for new PVs.
 
     Args:
         type (:class:`channel_access.common.Type`): Type of the PV.
         count (int): Number of elements of the PV.
 
     Returns:
-        dict: Data dictionary.
+        dict: Attributes dictionary.
     """
     result = {
         'status': ca.Status.UDF,
@@ -50,7 +50,7 @@ class PV(object):
     This class gives thread-safe access to a channel access PV.
     Always create PV objects through :meth:`Server.createPV()`.
 
-    The following keys can occur in a data dictionary:
+    The following keys can occur in an attributes dictionary:
 
     value
         Data value, type depends on the native type. For integer types
@@ -98,15 +98,15 @@ class PV(object):
         A tuple ``(minimum, maximum)``. When the value lies outside of the
         range of values the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
     """
-    def __init__(self, name, type, count=1, data=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
+    def __init__(self, name, type, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
         """
         Args:
             name (str, bytes): Name of the PV.
                 If ``encoding`` is ``None`` this must be raw bytes.
             type (:class:`Type`): The PV type.
-            data (dict): Data dictionary with the initial attributes. These
-                will override the default attributes.
             value_deadband (int, float): If the value changes more than this
+            attributes (dict): Attributes dictionary with the initial attributes.
+                These will override the default attributes.
                 deadband a value event is fired. This is only used for
                 integer and floating point PVs.
             archive_deadband (int, float): If the value changes more than this
@@ -117,7 +117,7 @@ class PV(object):
         """
         super().__init__()
         self._name = name
-        self._pv = _PV(name, type, count, data, value_deadband, archive_deadband, encoding)
+        self._pv = _PV(name, type, count, attributes, value_deadband, archive_deadband, encoding)
 
     @property
     def name(self):
@@ -148,32 +148,29 @@ class PV(object):
         return self._pv.type == ca.Type.ENUM
 
     @property
-    def data(self):
+    def attributes(self):
         """
-        dict: A dictionary with the current values.
+        dict: The current attributes dictionary
+
+        This is writeable and updates the attributes dictionary
         """
-        with self._pv._data_lock:
+        with self._pv._attributes_lock:
             # We need a copy here for thread-safety. All keys and values
             # are immutable so a shallow copy is enough
-            return self._pv._data.copy()
+            return self._pv._attributes.copy()
 
-    def update_data(self, data):
-        """
-        Update the values in the data dictionary.
-
-        Args:
-            data (dict): A data dictionary.
-        """
-        with self._pv._data_lock:
-            self._pv._update_data(data)
+    @attributes.setter
+    def attributes(self, attributes):
+        with self._pv._attributes_lock:
+            self._pv._update_attributes(attributes)
 
     @property
     def timestamp(self):
         """
         datetime: The timestamp in UTC of the last time value has changed.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('timestamp')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('timestamp')
 
     @property
     def value(self):
@@ -182,13 +179,13 @@ class PV(object):
 
         This is writeable and updates the value and timestamp.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('value')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('value')
 
     @value.setter
     def value(self, value):
         pv = self._pv
-        with pv._data_lock:
+        with pv._attributes_lock:
             pv._update_value(value)
             pv._update_meta('timestamp', datetime.utcnow())
             pv._publish()
@@ -200,14 +197,14 @@ class PV(object):
 
         This is writeable and updates the status.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('status')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('status')
 
     @status.setter
     def status(self, value):
         pv = self._pv
-        with pv._data_lock:
-            pv._update_status_severity(value, pv._data.get('severity'))
+        with pv._attributes_lock:
+            pv._update_status_severity(value, pv._attributes.get('severity'))
             pv._publish()
 
     @property
@@ -217,27 +214,32 @@ class PV(object):
 
         This is writeable and updates the severity.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('severity')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('severity')
 
     @severity.setter
     def severity(self, value):
         pv = self._pv
-        with pv._data_lock:
-            pv._update_status_severity(pv._data.get('status'), value)
+        with pv._attributes_lock:
+            pv._update_status_severity(pv._attributes.get('status'), value)
             pv._publish()
 
-    def update_status_severity(self, status, severity):
+    @property
+    def status_severity(self):
         """
-        Update the status and severity.
+        tuple(:class:`channel_access.common.Status`, :class:`channel_access.common.Severity`): The current status and severity.
 
-        Args:
-            status (:class:`channel_access.common.Status`): The new status.
-            severity (:class:`channel_access.common.Severity`): The new severity.
+        This is writeable and updates the status and severity at
+        the same time.
         """
+        with self._pv._attributes_lock:
+            return (self._pv._attributes.get('status'), self._pv._attributes.get('severity'))
+
+    @status_severity.setter
+    def status_severity(self, value):
         pv = self._pv
-        with pv._data_lock:
-            pv._update_status_severity(status, value)
+        with pv._attributes_lock:
+            pv._update_status_severity(value[0], value[1])
             pv._publish()
 
     @property
@@ -247,13 +249,13 @@ class PV(object):
 
         This is writeable and update the precision.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('precision')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('precision')
 
     @precision.setter
     def precision(self, value):
         pv = self._pv
-        with pv._data_lock:
+        with pv._attributes_lock:
             pv._update_meta('precision', value)
             pv._publish()
 
@@ -266,13 +268,13 @@ class PV(object):
 
         This is writeable and updates the unit.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('unit')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('unit')
 
     @unit.setter
     def unit(self, value):
         pv = self._pv
-        with pv._data_lock:
+        with pv._attributes_lock:
             pv._update_meta('unit', value)
             pv._publish()
 
@@ -286,14 +288,14 @@ class PV(object):
         This is writeable and updates the enumeration strings. The length
         of the tuple must be equal to the ``count`` parameter.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('enum_strings')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('enum_strings')
 
     @enum_strings.setter
     def enum_strings(self, value):
         assert(len(value) >= self.count)
         pv = self._pv
-        with pv._data_lock:
+        with pv._attributes_lock:
             pv._update_meta('enum_strings', value)
             pv._publish()
 
@@ -304,14 +306,14 @@ class PV(object):
 
         This is writeable and updates the display limits:
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('display_limits')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('display_limits')
 
     @display_limits.setter
     def display_limits(self, value):
         assert(len(value) >= 2)
         pv = self._pv
-        with pv._data_lock:
+        with pv._attributes_lock:
             pv._update_meta('display_limits', value)
             pv._publish()
 
@@ -322,14 +324,14 @@ class PV(object):
 
         This is writeable and updates the control display limits.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('control_limits')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('control_limits')
 
     @control_limits.setter
     def control_limits(self, value):
         assert(len(value) >= 2)
         pv = self._pv
-        with pv._data_lock:
+        with pv._attributes_lock:
             pv._update_meta('control_limits', value)
             pv._publish()
 
@@ -340,14 +342,14 @@ class PV(object):
 
         This is writeable and updates the warning limits.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('warning_limits')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('warning_limits')
 
     @warning_limits.setter
     def warning_limits(self, value):
         assert(len(value) >= 2)
         pv = self._pv
-        with pv._data_lock:
+        with pv._attributes_lock:
             pv._update_meta('warning_limits', value)
             pv._publish()
 
@@ -358,14 +360,14 @@ class PV(object):
 
         This is writeable and updates the alarm limits.
         """
-        with self._pv._data_lock:
-            return self._pv._data.get('alarm_limits')
+        with self._pv._attributes_lock:
+            return self._pv._attributes.get('alarm_limits')
 
     @alarm_limits.setter
     def alarm_limits(self, value):
         assert(len(value) >= 2)
         pv = self._pv
-        with pv._data_lock:
+        with pv._attributes_lock:
             pv._update_meta('alarm_limits', value)
             pv._publish()
 
@@ -376,7 +378,7 @@ class _PV(cas.PV):
 
     This class handles all requests from the underlying binding class.
     """
-    def __init__(self, name, type, count, data, value_deadband, archive_deadband, encoding):
+    def __init__(self, name, type, count, attributes, value_deadband, archive_deadband, encoding):
         if encoding is not None:
             name = name.encode(encoding)
         super().__init__(name)
@@ -386,15 +388,15 @@ class _PV(cas.PV):
         self._value_deadband = value_deadband
         self._archive_deadband = archive_deadband
 
-        self._data_lock = threading.Lock()
+        self._attributes_lock = threading.Lock()
         self._outstanding_events = ca.Events.NONE
         self._publish_events = False
-        self._data = default_data(type, count)
-        if data is not None:
-            self._update_data(data)
+        self._attributes = default_attributes(type, count)
+        if attributes is not None:
+            self._update_attributes(attributes)
 
-    def _encode(self, data):
-        result = data.copy()
+    def _encode(self, attributes):
+        result = attributes.copy()
 
         if self._encoding is not None:
             if 'unit' in result:
@@ -420,10 +422,10 @@ class _PV(cas.PV):
 
         return value, timestamp
 
-    # only call with data lock held
+    # only call with attributes lock held
     def _constrain_value(self, value):
         if isinstance(value, int) or isinstance(value, float):
-            ctrl_limits = self._data.get('control_limits')
+            ctrl_limits = self._attributes.get('control_limits')
 
             if ctrl_limits is not None and ctrl_limits[0] < ctrl_limits[1]:
                 if value < ctrl_limits[0]:
@@ -432,13 +434,13 @@ class _PV(cas.PV):
                     return ctrl_limits[1]
         return value
 
-    # only call with data lock held
+    # only call with attributes lock held
     def _calculate_status_severity(self, value):
         status = ca.Status.NO_ALARM
         severity = ca.Severity.NO_ALARM
         if isinstance(value, int) or isinstance(value, float):
-            alarm_limits = self._data.get('alarm_limits')
-            warn_limits = self._data.get('warning_limits')
+            alarm_limits = self._attributes.get('alarm_limits')
+            warn_limits = self._attributes.get('warning_limits')
 
             if warn_limits is not None and warn_limits[0] < warn_limits[1]:
                 if value < warn_limits[0]:
@@ -456,26 +458,26 @@ class _PV(cas.PV):
                     status = ca.Status.HIHI
         return status, severity
 
-    # only call with data lock held
+    # only call with attributes lock held
     def _update_status_severity(self, status, severity):
         changed = False
-        if status != self._data.get('status'):
-            self._data['status'] = status
+        if status != self._attributes.get('status'):
+            self._attributes['status'] = status
             changed = True
-        if severity != self._data.get('severity'):
-            self._data['severity'] = severity
+        if severity != self._attributes.get('severity'):
+            self._attributes['severity'] = severity
             changed = True
         if changed:
             self._outstanding_events |= ca.Events.ALARM
 
-    # only call with data lock held
+    # only call with attributes lock held
     def _update_value(self, value):
         value = self._constrain_value(value)
         status, severity = self._calculate_status_severity(value)
 
-        old_value = self._data.get('value')
+        old_value = self._attributes.get('value')
         if value != old_value:
-            self._data['value'] = value
+            self._attributes['value'] = value
             if isinstance(value, int) or isinstance(value, float):
                 diff = abs(value - old_value)
                 if diff >= self._value_deadband:
@@ -486,46 +488,46 @@ class _PV(cas.PV):
                 self._outstanding_events |= ca.Events.VALUE | ca.Events.ARCHIVE
         self._update_status_severity(status, severity)
 
-    # only call with data lock held
+    # only call with attributes lock held
     def _update_meta(self, key, value):
-        if value != self._data.get(key):
-            self._data[key] = value
+        if value != self._attributes.get(key):
+            self._attributes[key] = value
             self._outstanding_events |= ca.Events.PROPERTY
         if key.endswith('_limits'):
-            self._update_value(self._data.get('value'))
+            self._update_value(self._attributes.get('value'))
 
-    # only call with data lock held
-    def _update_data(self, data):
+    # only call with attributes lock held
+    def _update_attributes(self, attributes):
         limits_changed = False
         for key in ['precision', 'enum_strings', 'unit', 'ctrl_limits', 'display_limits', 'alarm_limits', 'warning_limits']:
-            if key in data and data[key] != self._data.get(key):
-                self._data[key] = data[key]
+            if key in attributes and attributes[key] != self._attributes.get(key):
+                self._attributes[key] = attributes[key]
                 self._outstanding_events |= ca.Events.PROPERTY
                 if key.endswith('_limits'):
                     limits_changed = True
 
-        if 'status' in data or 'severity' in data:
-            if 'status' in data:
-                status = data['status']
+        if 'status' in attributes or 'severity' in attributes:
+            if 'status' in attributes:
+                status = attributes['status']
             else:
-                status = self._data.get('status')
-            if 'severity' in data:
-                severity = data['severity']
+                status = self._attributes.get('status')
+            if 'severity' in attributes:
+                severity = attributes['severity']
             else:
-                severity = self._data.get('severity')
+                severity = self._attributes.get('severity')
             self._update_status_severity(status, severity)
 
-        if 'value' in data:
-            self._update_value(data['value'])
+        if 'value' in attributes:
+            self._update_value(attributes['value'])
         elif limits_changed:
-            self._update_value(self._data.get('value'))
+            self._update_value(self._attributes.get('value'))
 
-    # only call with data lock held
+    # only call with attributes lock held
     def _publish(self):
         events = self._outstanding_events
         self._outstanding_events = ca.Events.NONE
         if self._publish_events and events != ca.Events.NONE:
-            self.postEvent(events, self._encode(self._data))
+            self.postEvent(events, self._encode(self._attributes))
 
     def count(self):
         return self._count
@@ -534,12 +536,12 @@ class _PV(cas.PV):
         return self._type
 
     def read(self):
-        with self._data_lock:
-            return self._encode(self._data)
+        with self._attributes_lock:
+            return self._encode(self._attributes)
 
     def write(self, value, timestamp=None):
         value, timestamp = self._decode(value, timestamp)
-        with self._data_lock:
+        with self._attributes_lock:
             self._update_value(value)
             self._update_meta('timestamp', timestamp)
             self._publish()
@@ -547,12 +549,12 @@ class _PV(cas.PV):
         return False
 
     def interestRegister(self):
-        with self._data_lock:
+        with self._attributes_lock:
             self._publish_events = True
         return True
 
     def interestDelete(self):
-        with self._data_lock:
+        with self._attributes_lock:
             self._publish_events = False
 
 

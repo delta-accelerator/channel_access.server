@@ -25,7 +25,7 @@ def test_put_string(server):
     assert(pv.value == 'Hello')
 
 def test_put_enum(server):
-    pv = server.createPV('CAS:Test', ca.Type.ENUM, data = {
+    pv = server.createPV('CAS:Test', ca.Type.ENUM, attributes = {
         'enum_strings': ('a', 'b'),
     })
     common.caput('CAS:Test', 1)
@@ -51,7 +51,7 @@ def test_put_float_array(server, type_):
 def test_put_enum_array(server):
     strings = ('a', 'b', 'c', 'd')
     test_values = ( 2, 0, 1, 1, 0, 0, 3, 1, 3, 2 )
-    pv = server.createPV('CAS:Test', ca.Type.ENUM, count=len(test_values), data = {
+    pv = server.createPV('CAS:Test', ca.Type.ENUM, count=len(test_values), attributes = {
         'enum_strings': strings
     })
     common.caput('CAS:Test', test_values)

@@ -448,7 +448,7 @@ Retreive the attributes of the PV.
 This is called from the server when a get request is processed.
 
 Returns:
-    dict: An attribute dictionary with all PV attributes.
+    dict: An attributes dictionary with all PV attributes.
 )");
 PyDoc_STRVAR(write__doc__, R"(write(value, timestamp)
 
@@ -519,7 +519,7 @@ the appropiate methods to inform the server about the properties
 of the PV and handle requests for it. The default implementations
 represent a scalar string PV which rejects all read/write access.
 
-The following keys can occur in an attribute dictionary:
+The following keys can occur in an attributes dictionary:
 
     value
         Data value, type depends on the PV type. For integer types
