@@ -1,12 +1,28 @@
 import threading
 import weakref
-import math
 from datetime import datetime, timedelta
 
 import channel_access.common as ca
 from . import cas
 from .cas import ExistsResponse, AttachResponse
 
+
+
+try:
+    from math import isclose as _isclose
+except ImportError:
+    # implement our own according to the python source
+    def _isclose(a, b, *, rel_tol=1e-09, abs_tol=0.0):
+        import math
+
+        if rel_tol < 0.0 or abs_tol < 0.0:
+            raise ValueError('tolerances must be non-negative')
+        if a == b:
+            return True
+        if math.isinf(a) or matn.isinf(b):
+            return False
+        diff = abs(a - b)
+        return diff <= abs(rel_tol * b) or diff <= abs(rel_tol * a) or diff < abs_tol
 
 
 def default_attributes(type, count):
@@ -394,6 +410,9 @@ class _PV(cas.PV):
         self._encoding = encoding
         self._value_deadband = value_deadband
         self._archive_deadband = archive_deadband
+        # Used for float comparisons
+        self._relative_tolerance = 1e-05
+        self._absolute_tolerance = 1e-08
 
         self._attributes_lock = threading.Lock()
         self._outstanding_events = ca.Events.NONE
@@ -519,7 +538,16 @@ class _PV(cas.PV):
         status, severity = self._calculate_status_severity(value)
 
         old_value = self._attributes.get('value')
-        if value != old_value:
+        if self._type in (ca.Type.FLOAT, ca.Type.DOUBLE):
+            isclose = lambda a, b: _isclose(a, b, rel_tol=self._relative_tolerance, abs_tol=self._absolute_tolerance)
+            if self._count == 1:
+                value_changed = not isclose(value, old_value)
+            else:
+                value_changed = any(map(lambda x: not isclose(x[0], x[1]), zip(value, old_value)))
+        else:
+            value_changed = value != old_value
+
+        if value_changed:
             self._attributes['value'] = value
             if self._type not in (ca.Type.STRING, ca.Type.ENUM):
                 if self._count == 1:
