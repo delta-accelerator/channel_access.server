@@ -514,7 +514,7 @@ class _PV(cas.PV):
     def _update_attributes(self, attributes):
         """ Update attributes using an attributes dictionary. """
         limits_changed = False
-        for key in ['precision', 'enum_strings', 'unit', 'ctrl_limits', 'display_limits', 'alarm_limits', 'warning_limits']:
+        for key in ['precision', 'enum_strings', 'unit', 'control_limits', 'display_limits', 'alarm_limits', 'warning_limits']:
             if key in attributes and attributes[key] != self._attributes.get(key):
                 self._attributes[key] = attributes[key]
                 self._outstanding_events |= ca.Events.PROPERTY
