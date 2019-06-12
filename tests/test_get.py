@@ -46,7 +46,7 @@ def test_get_int_array(server, type_):
     test_values = tuple(range(10))
     pv = server.createPV('CAS:Test', type_, count=len(test_values), attributes = {
         'value': test_values
-    })
+    }, use_numpy=False)
     values = tuple(map(int, common.caget('CAS:Test', array=True)))
     assert(values == test_values)
 
@@ -55,7 +55,7 @@ def test_get_float_array(server, type_):
     test_values = tuple( x * 3.141 for x in list(range(10)) )
     pv = server.createPV('CAS:Test', type_, count=len(test_values), attributes = {
         'value': test_values
-    })
+    }, use_numpy=False)
     values = tuple(map(float, common.caget('CAS:Test', array=True)))
     assert(values == pytest.approx(test_values))
 
@@ -65,7 +65,7 @@ def test_get_enum_array(server):
     pv = server.createPV('CAS:Test', ca.Type.ENUM, count=len(test_values), attributes = {
         'enum_strings': strings,
         'value': test_values
-    })
+    }, use_numpy=False)
     values = tuple(map(int, common.caget('CAS:Test', as_string=False, array=True)))
     assert(values == test_values)
     values = tuple(common.caget('CAS:Test', as_string=True, array=True))
