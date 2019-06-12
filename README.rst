@@ -13,6 +13,18 @@ Then the library can be installed with pip::
 
     pip install channel_access.server
 
+For *numpy* support the ``numpy`` extra can be installed::
+
+   pip install channel_access.server[numpy]
+
+If *numpy* can be imported at install time, *numpy* support is automatically
+activated. This can be explicitly controlled with ``--with-numpy`` or
+``--without-numpy`` as arguments to ``setup.py install``.
+
+When using *pip* these arguments can be forwarded with::
+
+    pip install --install-option="--without-numpy" channel_access.server
+
 Example
 -------
 This example shows a simple server with a PV counting up:
