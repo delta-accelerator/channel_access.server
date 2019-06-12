@@ -28,9 +28,6 @@ def default_data(type, count):
 
     if type == ca.Type.STRING:
         result['value'] = ''
-    elif type == ca.Type.ENUM:
-        result['value'] = 0
-        result['enum_strings'] = ('',)
     else:
         result['value'] = 0 if count == 1 else (0,) * count
         result['unit'] = ''
@@ -40,6 +37,8 @@ def default_data(type, count):
         result['warning_limits'] = (0, 0)
         if type == ca.Type.FLOAT or type == ca.Type.DOUBLE:
             result['precision'] = 0
+        if type == ca.Type.ENUM:
+            result['enum_strings'] = ('',)
 
     return result
 
