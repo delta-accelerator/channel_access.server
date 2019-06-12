@@ -581,9 +581,15 @@ class _PV(cas.PV):
             if self._count == 1:
                 value_changed = not isclose(value, old_value)
             else:
-                value_changed = any(map(lambda x: not isclose(x[0], x[1]), zip(value, old_value)))
+                if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
+                    value_changed = not numpy.allclose(value, old_value, rtol=self._relative_tolerance, atol=self._absolute_tolerance)
+                else:
+                    value_changed = not all(map(lambda x: isclose(x[0], x[1]), zip(value, old_value)))
         else:
-            value_changed = value != old_value
+            if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
+                value_changed = not numpy.all(numpy.equal(value, old_value))
+            else:
+                value_changed = value != old_value
 
         if value_changed:
             self._attributes['value'] = value
