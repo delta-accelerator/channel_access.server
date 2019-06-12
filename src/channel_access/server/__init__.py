@@ -653,7 +653,7 @@ class _ServerThread(threading.Thread):
 
     def run(self):
         while not self._should_stop.is_set():
-            cas.process(1.0)
+            cas.process(0.1)
 
     def stop(self):
         self._should_stop.set()
