@@ -45,7 +45,7 @@ def default_attributes(type, count):
 
 class PV(object):
     """
-    A Channel Access PV.
+    A channel access PV.
 
     This class gives thread-safe access to a channel access PV.
     Always create PV objects through :meth:`Server.createPV()`.
@@ -53,10 +53,10 @@ class PV(object):
     The following keys can occur in an attributes dictionary:
 
     value
-        Data value, type depends on the native type. For integer types
-        and enum types this is ``int``, for floating point types this is ``float``.
-        For string types this is ``bytes`` or ``str`` depending on the
-        ``encondig`` parameter.
+        Data value, type depends on the PV type. For integer types
+        and enum types this is ``int``, for floating point types
+        this is ``float``. For string types this is ``bytes`` or ``str``
+        depending on the ``encondig`` parameter.
         For arrays this is a sequence of the corresponding values.
 
     status
@@ -74,42 +74,49 @@ class PV(object):
         The length of the tuple must be equal to :data:`PV.count`.
         The entries are ``bytes`` or ``str`` depending on the
         ``encondig`` parameter.
+        This is only used for enum types.
 
     unit
         String representing the physical unit of the value. The type is
         ``bytes`` or ``str`` depending on the ``encondig`` parameter.
+        This is only used for numerical types.
 
     precision
         Integer representing the number of relevant decimal places.
+        This is only used for floating point types.
 
     display_limits
         A tuple ``(minimum, maximum)`` representing the range of values
         for a user interface.
+        This is only used for numerical types.
 
     control_limits
         A tuple ``(minimum, maximum)`` representing the range of values
         accepted for a put request by the server.
+        This is only used for numerical types.
 
     warning_limits
-        A tuple ``(minimum, maximum)``. When the value lies outside of the
-        range of values the status becomes :class:`channel_access.common.Status.LOW` or :class:`channel_access.common.Status.HIGH`.
+        A tuple ``(minimum, maximum)``. When any value lies outside of the
+        range the status becomes :class:`channel_access.common.Status.LOW` or :class:`channel_access.common.Status.HIGH`.
+        This is only used for numerical types.
 
     alarm_limits
-        A tuple ``(minimum, maximum)``. When the value lies outside of the
-        range of values the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
+        A tuple ``(minimum, maximum)``. When any value lies outside of the
+        range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
+        This is only used for numerical types.
     """
     def __init__(self, name, type, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
         """
         Args:
-            name (str, bytes): Name of the PV.
+            name (str|bytes): Name of the PV.
                 If ``encoding`` is ``None`` this must be raw bytes.
-            type (:class:`Type`): The PV type.
-            value_deadband (int, float): If the value changes more than this
+            type (:class:`channel_access.common.Type`): The PV type.
             attributes (dict): Attributes dictionary with the initial attributes.
                 These will override the default attributes.
+            value_deadband (int, float): If any value changes more than this
                 deadband a value event is fired. This is only used for
                 integer and floating point PVs.
-            archive_deadband (int, float): If the value changes more than this
+            archive_deadband (int, float): If any value changes more than this
                 deadband an archive event is fired. This is only used for
                 integer and floating point PVs.
             encoding (str): The encoding used for the PV name and string
@@ -302,7 +309,7 @@ class PV(object):
     @property
     def display_limits(self):
         """
-        tuple(float, float): The current display limits.
+        tuple(int|float, int|float): The current display limits.
 
         This is writeable and updates the display limits:
         """
@@ -320,7 +327,7 @@ class PV(object):
     @property
     def control_limits(self):
         """
-        tuple(float, float): The control display limits.
+        tuple(int|float, int|float): The control display limits.
 
         This is writeable and updates the control display limits.
         """
@@ -338,7 +345,7 @@ class PV(object):
     @property
     def warning_limits(self):
         """
-        tuple(float, float): The warning display limits.
+        tuple(int|float, int|float): The warning display limits.
 
         This is writeable and updates the warning limits.
         """
@@ -356,7 +363,7 @@ class PV(object):
     @property
     def alarm_limits(self):
         """
-        tuple(float, float): The alarm display limits.
+        tuple(int|float, int|float): The alarm display limits.
 
         This is writeable and updates the alarm limits.
         """
@@ -560,7 +567,7 @@ class _PV(cas.PV):
 
 class Server(object):
     """
-    Channel Access server.
+    Threaded channel access server.
 
     On creation this class creates a server thread which processes
     channel access messages.
@@ -607,7 +614,8 @@ class Server(object):
         of the user to keep the PV objects alive as long as they are needed.
 
         If a PV with an already existing name is created the server will
-        use the new PV and ignore the other one.
+        use the new PV and ignore the other one. Connections made to the
+        old PV remain active and use the old PV object.
 
         Returns:
             :class:`PV`: A new PV object.
@@ -620,7 +628,7 @@ class _Server(cas.Server):
     Server implementation.
 
     This stores the created PVs in a weak dictionary and answers
-    the request using it.
+    the requests using it.
     """
     def __init__(self):
         super().__init__()
@@ -646,7 +654,7 @@ class _Server(cas.Server):
 
 class _ServerThread(threading.Thread):
     """
-    A thread calling cas.process() until the ``_should_stop`` event is set.
+    A thread calling cas.process() until :meth:`stop()` is called.
     """
     def __init__(self):
         super().__init__()

@@ -544,10 +544,12 @@ The following keys can occur in an attributes dictionary:
         Tuple with the strings corresponding to the enumeration values.
         The length of the tuple must be equal to :meth:``PV.count()``.
         The entries are ``bytes``.
+        This is only used for enumeration types.
 
     unit
         String representing the physical unit of the value. The type is
         ``bytes``.
+        This is only used for numerical types.
 
     precision
         Integer representing the number of relevant decimal places.
@@ -555,21 +557,22 @@ The following keys can occur in an attributes dictionary:
 
     display_limits
         A tuple ``(minimum, maximum)`` representing the range of values
-        for a user interface. This is only used for numerical types.
+        for a user interface.
+        This is only used for numerical types.
 
     control_limits
         A tuple ``(minimum, maximum)`` representing the range of values
-        accepted for a put request by the server. This is only used for
-        numerical types.
+        accepted for a put request by the server.
+        This is only used for numerical types.
 
     warning_limits
-        A tuple ``(minimum, maximum)``. When the value lies outside of the
+        A tuple ``(minimum, maximum)``. When any value lies outside of the
         range this is a warning condition.
         Typically the status becomes :class:`channel_access.common.Status.LOW` or :class:`channel_access.common.Status.HIGH`.
         This is only used for numerical types.
 
     alarm_limits
-        A tuple ``(minimum, maximum)``. When the value lies outside of the
+        A tuple ``(minimum, maximum)``. When any value lies outside of the
         range this is an alarm condition.
         Typically the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical types.
