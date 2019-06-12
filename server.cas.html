@@ -1,0 +1,399 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Low-level cas binding &#8212; Channel Access server library</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="High-level thread-safe interface" href="server.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-channel_access.server.cas">
+<span id="low-level-cas-binding"></span><h1>Low-level cas binding<a class="headerlink" href="#module-channel_access.server.cas" title="Permalink to this headline">¶</a></h1>
+<p>Low level wrapper module over the cas interface.</p>
+<dl class="class">
+<dt id="channel_access.server.cas.ExistsResponse">
+<em class="property">class </em><code class="descclassname">channel_access.server.cas.</code><code class="descname">ExistsResponse</code><a class="headerlink" href="#channel_access.server.cas.ExistsResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return value for the <a class="reference internal" href="#channel_access.server.cas.Server.pvExistTest" title="channel_access.server.cas.Server.pvExistTest"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Server.pvExistTest()</span></code></a> method.</p>
+<dl class="attribute">
+<dt id="channel_access.server.cas.ExistsResponse.EXISTS_HERE">
+<code class="descname">EXISTS_HERE</code><em class="property"> = 0</em><a class="headerlink" href="#channel_access.server.cas.ExistsResponse.EXISTS_HERE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="channel_access.server.cas.ExistsResponse.NOT_EXISTS_HERE">
+<code class="descname">NOT_EXISTS_HERE</code><em class="property"> = 1</em><a class="headerlink" href="#channel_access.server.cas.ExistsResponse.NOT_EXISTS_HERE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="channel_access.server.cas.AttachResponse">
+<em class="property">class </em><code class="descclassname">channel_access.server.cas.</code><code class="descname">AttachResponse</code><a class="headerlink" href="#channel_access.server.cas.AttachResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return value for the <a class="reference internal" href="#channel_access.server.cas.Server.pvAttach" title="channel_access.server.cas.Server.pvAttach"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Server.pvAttach()</span></code></a> method.</p>
+<dl class="attribute">
+<dt id="channel_access.server.cas.AttachResponse.NOT_FOUND">
+<code class="descname">NOT_FOUND</code><em class="property"> = 34340866</em><a class="headerlink" href="#channel_access.server.cas.AttachResponse.NOT_FOUND" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="channel_access.server.cas.AttachResponse.NO_MEMORY">
+<code class="descname">NO_MEMORY</code><em class="property"> = 34340865</em><a class="headerlink" href="#channel_access.server.cas.AttachResponse.NO_MEMORY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="channel_access.server.cas.Server">
+<em class="property">class </em><code class="descclassname">channel_access.server.cas.</code><code class="descname">Server</code><a class="headerlink" href="#channel_access.server.cas.Server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Server class.</p>
+<p>This class handles requests for PV connections.</p>
+<p>When creating a channel access server a user defined class should derive
+from this class and implement the methods <a class="reference internal" href="#channel_access.server.cas.Server.pvExistTest" title="channel_access.server.cas.Server.pvExistTest"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pvExistTest()</span></code></a> and
+<a class="reference internal" href="#channel_access.server.cas.Server.pvAttach" title="channel_access.server.cas.Server.pvAttach"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pvAttach()</span></code></a>. The default implementations reject all requests.</p>
+<dl class="method">
+<dt id="channel_access.server.cas.Server.pvAttach">
+<code class="descname">pvAttach</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.Server.pvAttach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a PV handler object for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<p>If a <a class="reference internal" href="#channel_access.server.cas.PV" title="channel_access.server.cas.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a> instance is returned then the server will hold
+a reference to it as long as it is needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>bytes</em>) – The name of the requested PV.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An <a class="reference internal" href="#channel_access.server.cas.AttachResponse" title="channel_access.server.cas.AttachResponse"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttachResponse</span></code></a> value indicating the reason why a handler object
+could not be created or a <a class="reference internal" href="#channel_access.server.cas.PV" title="channel_access.server.cas.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a> instance for the requested PV.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.Server.pvExistTest">
+<code class="descname">pvExistTest</code><span class="sig-paren">(</span><em>address</em>, <em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.Server.pvExistTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return wether/where the PV <code class="docutils literal notranslate"><span class="pre">name</span></code> exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>address</strong> (<em>tuple</em>) – A tuple <code class="docutils literal notranslate"><span class="pre">(ip,</span> <span class="pre">port)</span></code> which identifies a client.
+The client IP address is encoded as a 32bit integer.</p></li>
+<li><p><strong>name</strong> (<em>bytes</em>) – The name of the requested PV.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An <a class="reference internal" href="#channel_access.server.cas.ExistsResponse" title="channel_access.server.cas.ExistsResponse"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExistsResponse</span></code></a> value indicating the search result or a
+tuple <code class="docutils literal notranslate"><span class="pre">(ip,</span> <span class="pre">port)</span></code> indicating a server where the PV exists.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="channel_access.server.cas.PV">
+<em class="property">class </em><code class="descclassname">channel_access.server.cas.</code><code class="descname">PV</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV" title="Permalink to this definition">¶</a></dt>
+<dd><p>PV handler class.</p>
+<p>A user defined class should derive from this class and override
+the appropiate methods to inform the server about the properties
+of the PV and handle requests for it. The default implementations
+represent a scalar string PV which rejects all read/write access.</p>
+<p>The following keys can occur in an attributes dictionary:</p>
+<blockquote>
+<div><dl>
+<dt>value</dt><dd><p>Data value, type depends on the PV type. For integer types
+and enum types this is <code class="docutils literal notranslate"><span class="pre">int</span></code>, for floating point types this
+is <code class="docutils literal notranslate"><span class="pre">float</span></code>. For string types this is <code class="docutils literal notranslate"><span class="pre">bytes</span></code>.
+For arrays this is a sequence of the corresponding values.</p>
+</dd>
+<dt>status</dt><dd><p>Value status, one of <code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Status</span></code>.</p>
+</dd>
+<dt>severity</dt><dd><p>Value severity, one of <code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Severity</span></code>.</p>
+</dd>
+<dt>timestamp</dt><dd><p>An epics timestamp tuple corresponding to the last time the
+value changed.</p>
+<p>See also: <code class="xref py py-meth docutils literal notranslate"><span class="pre">channel_access.common.datetime_to_epics()</span></code> and
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">channel_access.common.epics_to_datetime()</span></code>.</p>
+</dd>
+<dt>enum_strings</dt><dd><p>Tuple with the strings corresponding to the enumeration values.
+The length of the tuple must be equal to :meth:<code class="docutils literal notranslate"><span class="pre">PV.count()</span></code>.
+The entries are <code class="docutils literal notranslate"><span class="pre">bytes</span></code>.
+This is only used for enum PVs.</p>
+</dd>
+<dt>unit</dt><dd><p>String representing the physical unit of the value. The type is
+<code class="docutils literal notranslate"><span class="pre">bytes</span></code>.
+This is only used for numerical PVs.</p>
+</dd>
+<dt>precision</dt><dd><p>Integer representing the number of relevant decimal places.
+This is only used for floating point PVs.</p>
+</dd>
+<dt>display_limits</dt><dd><p>A tuple <code class="docutils literal notranslate"><span class="pre">(minimum,</span> <span class="pre">maximum)</span></code> representing the range of values
+for a user interface.
+This is only used for numerical PVs.</p>
+</dd>
+<dt>control_limits</dt><dd><p>A tuple <code class="docutils literal notranslate"><span class="pre">(minimum,</span> <span class="pre">maximum)</span></code> representing the range of values
+accepted for a put request by the server.
+This is only used for numerical PVs.</p>
+</dd>
+<dt>warning_limits</dt><dd><p>A tuple <code class="docutils literal notranslate"><span class="pre">(minimum,</span> <span class="pre">maximum)</span></code>. When any value lies outside of the
+range this is a warning condition.
+Typically the status becomes <code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Status.LOW</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Status.HIGH</span></code>.
+This is only used for numerical PVs.</p>
+</dd>
+<dt>alarm_limits</dt><dd><p>A tuple <code class="docutils literal notranslate"><span class="pre">(minimum,</span> <span class="pre">maximum)</span></code>. When any value lies outside of the
+range this is an alarm condition.
+Typically the status becomes <code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Status.LOLO</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Status.HIHI</span></code>.
+This is only used for numerical PVs.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>bytes</em>) – The cannocial name of the PV. If a server serves the
+same PV under different names (aliases), this should be the
+main name.</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="channel_access.server.cas.PV.count">
+<code class="descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of elements.</p>
+<p>This is called from the server.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Number of elements.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.PV.destroy">
+<code class="descname">destroy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.destroy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy the PV.</p>
+<p>Request from the server when the PV handler object is no longer
+needed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.PV.interestDelete">
+<code class="descname">interestDelete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.interestDelete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Don’t inform server about changes.</p>
+<p>Request from the server that events should not be posted any more
+when attributes change.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.PV.interestRegister">
+<code class="descname">interestRegister</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.interestRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inform server about changes.</p>
+<p>Request from the server that events should be posted
+when attributes change.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the request was successful, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.PV.name">
+<code class="descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the name of the PV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The name of the PV given at initialization.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bytes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.PV.postEvent">
+<code class="descname">postEvent</code><span class="sig-paren">(</span><em>event_mask</em>, <em>attributes</em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.postEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Post events to clients.</p>
+<p>This should be called when any attributes change and events are requested
+(<a class="reference internal" href="#channel_access.server.cas.PV.interestRegister" title="channel_access.server.cas.PV.interestRegister"><code class="xref py py-meth docutils literal notranslate"><span class="pre">interestRegister()</span></code></a>). Depending on which attributes changed the
+<code class="docutils literal notranslate"><span class="pre">event_mask</span></code> should be set accordingly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>event_mask</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Events</span></code>) – This mask describes
+the events to post.</p></li>
+<li><p><strong>attributes</strong> (<em>dict</em>) – An attribute dictionary with the attribute values for the events.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.PV.read">
+<code class="descname">read</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retreive the attributes of the PV.</p>
+<p>This is called from the server when a get request is processed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>An attributes dictionary with all PV attributes.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.PV.type">
+<code class="descname">type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the type of the PV.</p>
+<p>This is called from the server.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Type of the PV.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Type</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel_access.server.cas.PV.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>value</em>, <em>timestamp</em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the value of the PV.</p>
+<p>This is called from the server when a put request is processed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – The new value. The type depends on the PV type.</p></li>
+<li><p><strong>timestamp</strong> – An epics timestamp tuple.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the write was successful, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="channel_access.server.cas.process">
+<code class="descclassname">channel_access.server.cas.</code><code class="descname">process</code><span class="sig-paren">(</span><em>timeout</em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process server io for at most <code class="docutils literal notranslate"><span class="pre">timeout</span></code> seconds.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">channel_access.server</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="server.html">High-level thread-safe interface</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Low-level cas binding</a></li>
+</ul>
+</li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="genindex.html">Index</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="api.html">API Reference</a><ul>
+      <li>Previous: <a href="server.html" title="previous chapter">High-level thread-safe interface</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/server.cas.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/server.cas.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
