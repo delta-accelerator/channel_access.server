@@ -13,6 +13,17 @@ Then the library can be installed with pip::
 
     pip install channel_access.server
 
+If *numpy* can be imported at install time, numpy support is automatically
+activated. This can be explicitly controlled with the environment variable
+``CA_WITH_NUMPY``::
+
+    CA_WITH_NUMPY=0 pip install channel_access.server
+    CA_WITH_NUMPY=1 pip install channel_access.server
+
+If the package is compiled with numpy support, numpy arrays are used
+by default. If numpy arrays should not be used, the parameter ``use_numpy``
+can be set to ``False``.
+
 Example
 -------
 This example shows a simple server with a PV counting up:

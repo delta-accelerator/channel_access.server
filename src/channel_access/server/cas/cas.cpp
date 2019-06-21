@@ -5,6 +5,10 @@
 #include <casdef.h>
 #include <fdManager.h>
 
+#if CA_SERVER_NUMPY_SUPPORT
+#include "numpy.hpp"
+#endif
+
 #include "server.hpp"
 #include "pv.hpp"
 
@@ -111,6 +115,11 @@ extern "C" {
 
 PyMODINIT_FUNC PyInit_cas(void)
 {
+#if CA_SERVER_NUMPY_SUPPORT
+    // initialize numpy C API
+    import_array();
+#endif
+
     int result = -1;
     PyObject* module = nullptr, *server_type = nullptr, *pv_type = nullptr;
     PyObject* ca_module = nullptr;
@@ -118,6 +127,16 @@ PyMODINIT_FUNC PyInit_cas(void)
 
     module = PyModule_Create(&cas::module);
     if (not module) goto error;
+
+
+    {
+        PyObject* numpy_support = CA_SERVER_NUMPY_SUPPORT ? Py_True : Py_False;
+        Py_INCREF(numpy_support);
+        if (PyModule_AddObject(module, "NUMPY_SUPPORT", numpy_support) != 0) {
+            Py_DECREF(numpy_support);
+            goto error;
+        }
+    }
 
 
     ca_module = PyImport_ImportModule("channel_access.common");

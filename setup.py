@@ -1,6 +1,7 @@
 import os
 import sys
 from setuptools import setup, PEP420PackageFinder, Extension
+from setuptools.command.build_ext import build_ext
 
 
 
@@ -43,6 +44,30 @@ cas_extension = Extension('channel_access.server.cas',
 )
 
 
+class BuildExtensionCommand(build_ext):
+    def finalize_options(self):
+        super().finalize_options()
+        use_numpy = os.environ.get('CA_WITH_NUMPY')
+        if use_numpy is None:
+            try:
+                import numpy
+            except ImportError:
+                use_numpy = False
+            else:
+                use_numpy = True
+        else:
+            use_numpy = bool(int(use_numpy))
+
+        if self.define is None:
+            self.define = []
+        self.define.append(('CA_SERVER_NUMPY_SUPPORT', int(use_numpy)))
+        if use_numpy:
+            import numpy
+            if self.include_dirs is None:
+                self.include_dirs = []
+            self.include_dirs.append(numpy.get_include())
+
+
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
@@ -71,9 +96,13 @@ setup(
     setup_requires = [ 'setuptools_scm' ],
     install_requires = [ 'channel_access.common' ],
     extras_require = {
+        'numpy': [ 'numpy' ],
         'dev': [ 'tox', 'sphinx', 'pytest' ],
         'doc': [ 'sphinx' ],
         'test': [ 'pytest' ]
     },
-    use_scm_version = True
+    use_scm_version = True,
+    cmdclass={
+        'build_ext': BuildExtensionCommand,
+    }
 )

@@ -17,6 +17,7 @@ struct Pv {
     PyObject_HEAD
     char* name;
     bool held_by_server;
+    char use_numpy;
     std::unique_ptr<PvProxy> proxy;
 };
 static_assert(std::is_standard_layout<Pv>::value, "Pv has to be standard layout to work with the Python API");
@@ -225,10 +226,11 @@ public:
 
     virtual caStatus write(casCtx const& ctx, gdd const& value) override
     {
+        Pv* pv_struct = reinterpret_cast<Pv*>(pv);
 
         caStatus ret = S_casApp_noSupport;
         PyGILState_STATE gstate = PyGILState_Ensure();
-            PyObject* args = from_gdd(value);
+            PyObject* args = from_gdd(value, pv_struct->use_numpy);
             if (args) {
                 PyObject* fn = PyObject_GetAttrString(pv, "write");
                 if (fn) {
@@ -381,10 +383,12 @@ int pv_init(PyObject* self, PyObject* args, PyObject*)
     Pv* pv = reinterpret_cast<Pv*>(self);
 
     char const *c_name;
-    if (not PyArg_ParseTuple(args, "y", &c_name)) return -1;
+    int numpy = false;
+    if (not PyArg_ParseTuple(args, "y|p", &c_name, &numpy)) return -1;
 
     pv->name = strdup(c_name);
     pv->held_by_server = false;
+    pv->use_numpy = numpy;
     return 0;
 }
 
@@ -507,7 +511,13 @@ PyMethodDef pv_methods[] = {
     {"interestDelete",   static_cast<PyCFunction>(PvProxy::interestDelete),   METH_NOARGS,  interestDelete__doc__},
     {nullptr}
 };
+
+PyDoc_STRVAR(use_numpy__doc__, R"(use_numpy
+
+bool: ``True`` if numpy arrays are used, ``False`` otherwise.
+)");
 PyMemberDef pv_members[] = {
+    {"use_numpy",  T_BOOL,   offsetof(Pv, use_numpy), 0, use_numpy__doc__},
     {nullptr}
 };
 

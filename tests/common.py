@@ -3,6 +3,7 @@ import pytest
 import subprocess
 
 import channel_access.common as ca
+import channel_access.server as cas
 
 
 
@@ -59,7 +60,7 @@ def caget(pv, as_string=False, array=False):
 
 def caput(pv, value):
     args = []
-    if isinstance(value, list) or isinstance(value, tuple):
+    if isinstance(value, list) or isinstance(value, tuple) or (cas.numpy and isinstance(value, cas.numpy.ndarray)):
         args.append('-a')
         values = [ str(len(value)) ] + [ str(x) for x in value ]
     else:

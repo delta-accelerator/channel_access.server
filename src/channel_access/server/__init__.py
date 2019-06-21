@@ -6,6 +6,11 @@ import channel_access.common as ca
 from . import cas
 from .cas import ExistsResponse, AttachResponse
 
+# Only import numpy if compiled with numpy support
+if cas.NUMPY_SUPPORT:
+    import numpy
+else:
+    numpy = None
 
 
 try:
@@ -25,13 +30,14 @@ except ImportError:
         return diff <= abs(rel_tol * b) or diff <= abs(rel_tol * a) or diff < abs_tol
 
 
-def default_attributes(type, count):
+def default_attributes(type, count, use_numpy):
     """
     Return the default attributes dictionary for new PVs.
 
     Args:
         type (:class:`channel_access.common.Type`): Type of the PV.
         count (int): Number of elements of the PV.
+    use_numpy (bool): If ``True`` use numpy arrays.
 
     Returns:
         dict: Attributes dictionary.
@@ -45,7 +51,13 @@ def default_attributes(type, count):
     if type == ca.Type.STRING:
         result['value'] = ''
     else:
-        result['value'] = 0 if count == 1 else (0,) * count
+        if count == 1:
+            result['value'] = 0
+        else:
+            if numpy and use_numpy:
+                result['value'] = numpy.zeros(count)
+            else:
+                result['value'] = (0,) * count
         result['unit'] = ''
         result['control_limits'] = (0, 0)
         result['display_limits'] = (0, 0)
@@ -121,7 +133,7 @@ class PV(object):
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
     """
-    def __init__(self, name, type, count=1, *, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
+    def __init__(self, name, type, count=1, *, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', use_numpy=None):
         """
         Args:
             name (str|bytes): Name of the PV.
@@ -137,10 +149,12 @@ class PV(object):
                 This is only used for numerical PVs.
             encoding (str): The encoding used for the PV name and string
                 attributes. If ``None`` these values must be bytes.
+            use_numpy (bool): If ``True`` use numpy arrays. If ``None``
+                use numpy arrays if numpy support is available.
         """
         super().__init__()
         self._name = name
-        self._pv = _PV(name, type, count, attributes, value_deadband, archive_deadband, encoding)
+        self._pv = _PV(name, type, count, attributes, value_deadband, archive_deadband, encoding, use_numpy)
 
     @property
     def name(self):
@@ -148,6 +162,17 @@ class PV(object):
         str: The name of this PV.
         """
         return self._name
+
+    @property
+    def use_numpy(self):
+        """
+        bool: Wether this PV uses numpy arrays for its value.
+        """
+        return self._pv.use_numpy
+
+    @use_numpy.setter
+    def use_numpy(self, value):
+        self._pv.use_numpy = value
 
     @property
     def count(self):
@@ -179,8 +204,14 @@ class PV(object):
         """
         with self._pv._attributes_lock:
             # We need a copy here for thread-safety. All keys and values
-            # are immutable so a shallow copy is enough
-            return self._pv._attributes.copy()
+            # are immutable so a shallow copy is enough.
+            result = self._pv._attributes.copy()
+            # If the value is a numpy array whe have to create a copy
+            # because numpy arrays are not immutable.
+            value = result.get('value')
+            if numpy and isinstance(value, numpy.ndarray):
+                result['value'] = numpy.copy(value)
+        return result
 
     @attributes.setter
     def attributes(self, attributes):
@@ -203,7 +234,12 @@ class PV(object):
         This is writeable and updates the value and timestamp.
         """
         with self._pv._attributes_lock:
-            return self._pv._attributes.get('value')
+            value = self._pv._attributes.get('value')
+            # If the value is a numpy array whe have to create a copy
+            # because numpy arrays are not immutable.
+            if numpy and isinstance(value, numpy.ndarray):
+                value = numpy.copy(value)
+        return value
 
     @value.setter
     def value(self, value):
@@ -401,10 +437,12 @@ class _PV(cas.PV):
 
     This class handles all requests from the underlying binding class.
     """
-    def __init__(self, name, type, count, attributes, value_deadband, archive_deadband, encoding):
+    def __init__(self, name, type, count, attributes, value_deadband, archive_deadband, encoding, use_numpy):
         if encoding is not None:
             name = name.encode(encoding)
-        super().__init__(name)
+        if use_numpy is None:
+            use_numpy = numpy is not None
+        super().__init__(name, use_numpy)
         self._type = type
         self._count = count
         self._encoding = encoding
@@ -417,7 +455,7 @@ class _PV(cas.PV):
         self._attributes_lock = threading.Lock()
         self._outstanding_events = ca.Events.NONE
         self._publish_events = False
-        self._attributes = default_attributes(type, count)
+        self._attributes = default_attributes(type, count, use_numpy)
         if attributes is not None:
             self._update_attributes(attributes)
 
@@ -543,9 +581,15 @@ class _PV(cas.PV):
             if self._count == 1:
                 value_changed = not isclose(value, old_value)
             else:
-                value_changed = any(map(lambda x: not isclose(x[0], x[1]), zip(value, old_value)))
+                if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
+                    value_changed = not numpy.allclose(value, old_value, rtol=self._relative_tolerance, atol=self._absolute_tolerance)
+                else:
+                    value_changed = not all(map(lambda x: isclose(x[0], x[1]), zip(value, old_value)))
         else:
-            value_changed = value != old_value
+            if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
+                value_changed = not numpy.all(numpy.equal(value, old_value))
+            else:
+                value_changed = value != old_value
 
         if value_changed:
             self._attributes['value'] = value
@@ -656,15 +700,18 @@ class Server(object):
         with cas.Server() as server:
             pass
     """
-    def __init__(self, *, encoding=None):
+    def __init__(self, *, encoding=None, use_numpy=None):
         """
         Args:
             encoding (str): If not ``None`` this value is used as a
                 default for the ``encoding`` parameter when
                 calling :meth:`createPV`.
+            use_numpy (bool): If not ``None`` this value is used as a
+                default for the ``use_numpy`` parameter when
+                calling :meth:`createPV`.
         """
         super().__init__()
-        self._server = _Server(encoding)
+        self._server = _Server(encoding, use_numpy)
         self._thread = _ServerThread()
 
         self._thread.start()
@@ -712,9 +759,10 @@ class _Server(cas.Server):
     This stores the created PVs in a weak dictionary and answers
     the requests using it.
     """
-    def __init__(self, encoding):
+    def __init__(self, encoding, use_numpy):
         super().__init__()
         self._encoding = encoding
+        self._use_numpy = use_numpy
         self._pvs = weakref.WeakValueDictionary()
 
     def pvExistTest(self, client, pv_name):
@@ -731,6 +779,8 @@ class _Server(cas.Server):
     def createPV(self, *args, **kwargs):
         if self._encoding is not None and 'encoding' not in kwargs:
             kwargs['encoding'] = self._encoding
+        if self._use_numpy is not None and 'use_numpy' not in kwargs:
+            kwargs['use_numpy'] = self._use_numpy
         pv = PV(*args, **kwargs)
         # Store the raw bytes name in the dictionary
         self._pvs[pv._pv.name()] = pv
