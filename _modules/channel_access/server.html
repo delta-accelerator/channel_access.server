@@ -33,22 +33,44 @@
   <h1>Source code for channel_access.server</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">weakref</span>
-<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 
 <span class="kn">import</span> <span class="nn">channel_access.common</span> <span class="k">as</span> <span class="nn">ca</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">cas</span>
 <span class="kn">from</span> <span class="nn">.cas</span> <span class="k">import</span> <span class="n">ExistsResponse</span><span class="p">,</span> <span class="n">AttachResponse</span>
 
+<span class="c1"># Only import numpy if compiled with numpy support</span>
+<span class="k">if</span> <span class="n">cas</span><span class="o">.</span><span class="n">NUMPY_SUPPORT</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">numpy</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">numpy</span> <span class="o">=</span> <span class="kc">None</span>
 
 
-<div class="viewcode-block" id="default_attributes"><a class="viewcode-back" href="../../server.html#channel_access.server.default_attributes">[docs]</a><span class="k">def</span> <span class="nf">default_attributes</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">isclose</span> <span class="k">as</span> <span class="n">_isclose</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># implement our own according to the python source</span>
+    <span class="k">def</span> <span class="nf">_isclose</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">1e-09</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">math</span>
+
+        <span class="k">if</span> <span class="n">rel_tol</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">abs_tol</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;tolerances must be non-negative&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">or</span> <span class="n">matn</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">diff</span> <span class="o">&lt;=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rel_tol</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="ow">or</span> <span class="n">diff</span> <span class="o">&lt;=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rel_tol</span> <span class="o">*</span> <span class="n">a</span><span class="p">)</span> <span class="ow">or</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="n">abs_tol</span>
+
+
+<div class="viewcode-block" id="default_attributes"><a class="viewcode-back" href="../../server.html#channel_access.server.default_attributes">[docs]</a><span class="k">def</span> <span class="nf">default_attributes</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return the default attributes dictionary for new PVs.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        type (:class:`channel_access.common.Type`): Type of the PV.</span>
 <span class="sd">        count (int): Number of elements of the PV.</span>
+<span class="sd">    use_numpy (bool): If ``True`` use numpy arrays.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        dict: Attributes dictionary.</span>
@@ -62,7 +84,13 @@
     <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
         <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="n">count</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="n">use_numpy</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="n">count</span>
         <span class="n">result</span><span class="p">[</span><span class="s1">&#39;unit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="n">result</span><span class="p">[</span><span class="s1">&#39;control_limits&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">result</span><span class="p">[</span><span class="s1">&#39;display_limits&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -138,7 +166,7 @@
 <span class="sd">        range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.</span>
 <span class="sd">        This is only used for numerical PVs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">value_deadband</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">value_deadband</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">use_numpy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            name (str|bytes): Name of the PV.</span>
@@ -154,10 +182,12 @@
 <span class="sd">                This is only used for numerical PVs.</span>
 <span class="sd">            encoding (str): The encoding used for the PV name and string</span>
 <span class="sd">                attributes. If ``None`` these values must be bytes.</span>
+<span class="sd">            use_numpy (bool): If ``True`` use numpy arrays. If ``None``</span>
+<span class="sd">                use numpy arrays if numpy support is available.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span> <span class="o">=</span> <span class="n">_PV</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">value_deadband</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span> <span class="o">=</span> <span class="n">_PV</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">value_deadband</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -165,6 +195,17 @@
 <span class="sd">        str: The name of this PV.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">use_numpy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        bool: Wether this PV uses numpy arrays for its value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">use_numpy</span>
+
+    <span class="nd">@use_numpy</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">use_numpy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">use_numpy</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -196,8 +237,14 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
             <span class="c1"># We need a copy here for thread-safety. All keys and values</span>
-            <span class="c1"># are immutable so a shallow copy is enough</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="c1"># are immutable so a shallow copy is enough.</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="c1"># If the value is a numpy array whe have to create a copy</span>
+            <span class="c1"># because numpy arrays are not immutable.</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
 
     <span class="nd">@attributes</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">):</span>
@@ -220,7 +267,12 @@
 <span class="sd">        This is writeable and updates the value and timestamp.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+            <span class="c1"># If the value is a numpy array whe have to create a copy</span>
+            <span class="c1"># because numpy arrays are not immutable.</span>
+            <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
 
     <span class="nd">@value</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -418,20 +470,25 @@
 
 <span class="sd">    This class handles all requests from the underlying binding class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">value_deadband</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">value_deadband</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_numpy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">use_numpy</span> <span class="o">=</span> <span class="n">numpy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">=</span> <span class="n">count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_value_deadband</span> <span class="o">=</span> <span class="n">value_deadband</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_archive_deadband</span> <span class="o">=</span> <span class="n">archive_deadband</span>
+        <span class="c1"># Used for float comparisons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_relative_tolerance</span> <span class="o">=</span> <span class="mf">1e-05</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_absolute_tolerance</span> <span class="o">=</span> <span class="mf">1e-08</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outstanding_events</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">NONE</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_publish_events</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span> <span class="o">=</span> <span class="n">default_attributes</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span> <span class="o">=</span> <span class="n">default_attributes</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">attributes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_attributes</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
 
@@ -552,7 +609,22 @@
         <span class="n">status</span><span class="p">,</span> <span class="n">severity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_status_severity</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
         <span class="n">old_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">old_value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">):</span>
+            <span class="n">isclose</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">_isclose</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_tolerance</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_absolute_tolerance</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">isclose</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                    <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">numpy</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_tolerance</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_absolute_tolerance</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">zip</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">numpy</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">value_changed</span> <span class="o">=</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">old_value</span>
+
+        <span class="k">if</span> <span class="n">value_changed</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">ENUM</span><span class="p">):</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -661,9 +733,18 @@
 <span class="sd">        with cas.Server() as server:</span>
 <span class="sd">            pass</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_numpy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            encoding (str): If not ``None`` this value is used as a</span>
+<span class="sd">                default for the ``encoding`` parameter when</span>
+<span class="sd">                calling :meth:`createPV`.</span>
+<span class="sd">            use_numpy (bool): If not ``None`` this value is used as a</span>
+<span class="sd">                default for the ``use_numpy`` parameter when</span>
+<span class="sd">                calling :meth:`createPV`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">_Server</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">_Server</span><span class="p">(</span><span class="n">encoding</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">_ServerThread</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -711,8 +792,10 @@
 <span class="sd">    This stores the created PVs in a weak dictionary and answers</span>
 <span class="sd">    the requests using it.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span> <span class="o">=</span> <span class="n">use_numpy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakValueDictionary</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">pvExistTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">pv_name</span><span class="p">):</span>
@@ -727,6 +810,10 @@
         <span class="k">return</span> <span class="n">pv</span><span class="o">.</span><span class="n">_pv</span>
 
     <span class="k">def</span> <span class="nf">createPV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;encoding&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;encoding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;use_numpy&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;use_numpy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span>
         <span class="n">pv</span> <span class="o">=</span> <span class="n">PV</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># Store the raw bytes name in the dictionary</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span><span class="p">[</span><span class="n">pv</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">name</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pv</span>

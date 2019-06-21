@@ -44,6 +44,16 @@ and <code class="docutils literal notranslate"><span class="pre">EPICS_HOST_ARCH
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">channel_access</span><span class="o">.</span><span class="n">server</span>
 </pre></div>
 </div>
+<p>If <em>numpy</em> can be imported at install time, numpy support is automatically
+activated. This can be explicitly controlled with the environment variable
+<code class="docutils literal notranslate"><span class="pre">CA_WITH_NUMPY</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CA_WITH_NUMPY</span><span class="o">=</span><span class="mi">0</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">channel_access</span><span class="o">.</span><span class="n">server</span>
+<span class="n">CA_WITH_NUMPY</span><span class="o">=</span><span class="mi">1</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">channel_access</span><span class="o">.</span><span class="n">server</span>
+</pre></div>
+</div>
+<p>If the package is compiled with numpy support, numpy arrays are used
+by default. If numpy arrays should not be used, the parameter <code class="docutils literal notranslate"><span class="pre">use_numpy</span></code>
+can be set to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </div>
 <div class="section" id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
