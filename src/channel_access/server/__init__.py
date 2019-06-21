@@ -700,15 +700,18 @@ class Server(object):
         with cas.Server() as server:
             pass
     """
-    def __init__(self, *, encoding=None):
+    def __init__(self, *, encoding=None, use_numpy=None):
         """
         Args:
             encoding (str): If not ``None`` this value is used as a
                 default for the ``encoding`` parameter when
                 calling :meth:`createPV`.
+            use_numpy (bool): If not ``None`` this value is used as a
+                default for the ``use_numpy`` parameter when
+                calling :meth:`createPV`.
         """
         super().__init__()
-        self._server = _Server(encoding)
+        self._server = _Server(encoding, use_numpy)
         self._thread = _ServerThread()
 
         self._thread.start()
@@ -756,9 +759,10 @@ class _Server(cas.Server):
     This stores the created PVs in a weak dictionary and answers
     the requests using it.
     """
-    def __init__(self, encoding):
+    def __init__(self, encoding, use_numpy):
         super().__init__()
         self._encoding = encoding
+        self._use_numpy = use_numpy
         self._pvs = weakref.WeakValueDictionary()
 
     def pvExistTest(self, client, pv_name):
@@ -775,6 +779,8 @@ class _Server(cas.Server):
     def createPV(self, *args, **kwargs):
         if self._encoding is not None and 'encoding' not in kwargs:
             kwargs['encoding'] = self._encoding
+        if self._use_numpy is not None and 'use_numpy' not in kwargs:
+            kwargs['use_numpy'] = self._use_numpy
         pv = PV(*args, **kwargs)
         # Store the raw bytes name in the dictionary
         self._pvs[pv._pv.name()] = pv
