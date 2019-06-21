@@ -45,38 +45,23 @@ cas_extension = Extension('channel_access.server.cas',
 
 
 class BuildExtensionCommand(build_ext):
-    user_options = build_ext.user_options + [
-        ('with-numpy', None, 'Build with numpy support'),
-        ('without-numpy', None, 'Build without numpy support')
-    ]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.use_numpy = False
-
-    def initialize_options(self):
-        super().initialize_options()
-        self.with_numpy = None
-        self.without_numpy = None
-
     def finalize_options(self):
         super().finalize_options()
-        if self.with_numpy is None and self.without_numpy is None:
+        use_numpy = os.environ.get('CA_WITH_NUMPY')
+        if use_numpy is None:
             try:
                 import numpy
             except ImportError:
-                self.use_numpy = False
+                use_numpy = False
             else:
-                self.use_numpy = True
-        elif self.without_numpy:
-            self.use_numpy = False
-        elif self.with_numpy:
-            self.use_numpy = True
+                use_numpy = True
+        else:
+            use_numpy = bool(int(use_numpy))
 
         if self.define is None:
             self.define = []
-        self.define.append(('CA_SERVER_NUMPY_SUPPORT', int(self.use_numpy)))
-        if self.use_numpy:
+        self.define.append(('CA_SERVER_NUMPY_SUPPORT', int(use_numpy)))
+        if use_numpy:
             import numpy
             if self.include_dirs is None:
                 self.include_dirs = []

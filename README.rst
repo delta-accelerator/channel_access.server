@@ -13,17 +13,16 @@ Then the library can be installed with pip::
 
     pip install channel_access.server
 
-For *numpy* support the ``numpy`` extra can be installed::
+If *numpy* can be imported at install time, numpy support is automatically
+activated. This can be explicitly controlled with the environment variable
+``CA_WITH_NUMPY``::
 
-   pip install channel_access.server[numpy]
+    CA_WITH_NUMPY=0 pip install channel_access.server
+    CA_WITH_NUMPY=1 pip install channel_access.server
 
-If *numpy* can be imported at install time, *numpy* support is automatically
-activated. This can be explicitly controlled with ``--with-numpy`` or
-``--without-numpy`` as arguments to ``setup.py install``.
-
-When using *pip* these arguments can be forwarded with::
-
-    pip install --install-option="--without-numpy" channel_access.server
+If the package is compiled with numpy support, numpy arrays are used
+by default. If numpy arrays should not be used, the parameter ``use_numpy``
+can be set to ``False``.
 
 Example
 -------
