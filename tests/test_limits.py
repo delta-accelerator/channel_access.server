@@ -34,11 +34,27 @@ def test_control_limits_enum(server):
 def test_control_limits_array(server, type_):
     pv = server.createPV('CAS:Test', type_, count=3, attributes = {
         'control_limits': (-5, 10)
-    })
+    }, use_numpy=False)
     pv.value = (1, 2, 3)
     assert(pv.value == (1, 2, 3))
     pv.value = (-10, 2, 20)
     assert(pv.value == (-5, 2, 10))
+
+@pytest.mark.skipif(not cas.numpy, reason="No numpy support")
+@pytest.mark.parametrize("type_", common.INT_TYPES + common.FLOAT_TYPES)
+def test_control_limits_array_numpy(server, type_):
+    import numpy
+
+    pv = server.createPV('CAS:Test', type_, count=3, attributes = {
+        'control_limits': (-5, 10)
+    }, use_numpy=True)
+    test_values = numpy.array([ 1, 2, 3 ])
+    pv.value = test_values
+    assert(numpy.all(numpy.equal(pv.value, test_values)))
+
+    test_values = numpy.array([ -10, 2, 20 ])
+    pv.value = test_values
+    assert(numpy.all(numpy.equal(pv.value, test_values)))
 
 
 
@@ -66,7 +82,7 @@ def test_control_limits_array(server, type_):
     pv = server.createPV('CAS:Test', type_, count=3, attributes = {
         'warning_limits': (-5, 10),
         'alarm_limits': (-10, 15)
-    })
+    }, use_numpy=False)
     # Simple limits
     pv.value = (1, -5, 3)
     assert(pv.status_severity == (ca.Status.NO_ALARM, ca.Severity.NO_ALARM))
@@ -100,4 +116,48 @@ def test_control_limits_array(server, type_):
     pv.value = (1, -30, 17)
     assert(pv.status_severity == (ca.Status.LOLO, ca.Severity.MAJOR))
     pv.value = (1, -12, 40)
+    assert(pv.status_severity == (ca.Status.HIHI, ca.Severity.MAJOR))
+
+@pytest.mark.skipif(not cas.numpy, reason="No numpy support")
+@pytest.mark.parametrize("type_", common.INT_TYPES + common.FLOAT_TYPES)
+def test_control_limits_array_numpy(server, type_):
+    import numpy
+
+    pv = server.createPV('CAS:Test', type_, count=3, attributes = {
+        'warning_limits': (-5, 10),
+        'alarm_limits': (-10, 15)
+    }, use_numpy=True)
+    # Simple limits
+    pv.value = numpy.array([ 1, -5, 3 ])
+    assert(pv.status_severity == (ca.Status.NO_ALARM, ca.Severity.NO_ALARM))
+    pv.value = numpy.array([ 1, -10, 3 ])
+    assert(pv.status_severity == (ca.Status.LOW, ca.Severity.MINOR))
+    pv.value = numpy.array([ 1, -15, 3 ])
+    assert(pv.status_severity == (ca.Status.LOLO, ca.Severity.MAJOR))
+    pv.value = numpy.array([ 1, 10, 3 ])
+    assert(pv.status_severity == (ca.Status.NO_ALARM, ca.Severity.NO_ALARM))
+    pv.value = numpy.array([ 1, 15, 3 ])
+    assert(pv.status_severity == (ca.Status.HIGH, ca.Severity.MINOR))
+    pv.value = numpy.array([ 1, 25, 3 ])
+    assert(pv.status_severity == (ca.Status.HIHI, ca.Severity.MAJOR))
+
+    # Most severe should win
+    pv.value = numpy.array([ 1, -8, -15 ])
+    assert(pv.status_severity == (ca.Status.LOLO, ca.Severity.MAJOR))
+    pv.value = numpy.array([ 1, 14, 25 ])
+    assert(pv.status_severity == (ca.Status.HIHI, ca.Severity.MAJOR))
+    pv.value = numpy.array([ 1, -30, 12 ])
+    assert(pv.status_severity == (ca.Status.LOLO, ca.Severity.MAJOR))
+    pv.value = numpy.array([ 1, -4, 20 ])
+    assert(pv.status_severity == (ca.Status.HIHI, ca.Severity.MAJOR))
+
+    # For violations in different directions the most
+    # severe (absolute difference) should win
+    pv.value = numpy.array([ 1, -9, 11 ])
+    assert(pv.status_severity == (ca.Status.LOW, ca.Severity.MINOR))
+    pv.value = numpy.array([ 1, -6, 14 ])
+    assert(pv.status_severity == (ca.Status.HIGH, ca.Severity.MINOR))
+    pv.value = numpy.array([ 1, -30, 17 ])
+    assert(pv.status_severity == (ca.Status.LOLO, ca.Severity.MAJOR))
+    pv.value = numpy.array([ 1, -12, 40 ])
     assert(pv.status_severity == (ca.Status.HIHI, ca.Severity.MAJOR))
