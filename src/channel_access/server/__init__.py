@@ -121,7 +121,7 @@ class PV(object):
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
     """
-    def __init__(self, name, type, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
+    def __init__(self, name, type, count=1, *, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8'):
         """
         Args:
             name (str|bytes): Name of the PV.
