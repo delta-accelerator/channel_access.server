@@ -2,3 +2,5 @@ build/
 dist/
 src/
 .tox/
+.eggs/
+tests/
