@@ -24,7 +24,7 @@ except ImportError:
             raise ValueError('tolerances must be non-negative')
         if a == b:
             return True
-        if math.isinf(a) or matn.isinf(b):
+        if math.isinf(a) or math.isinf(b):
             return False
         diff = abs(a - b)
         return diff <= abs(rel_tol * b) or diff <= abs(rel_tol * a) or diff < abs_tol
