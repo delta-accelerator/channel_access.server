@@ -654,7 +654,14 @@ class _PV(cas.PV):
         events = self._outstanding_events
         self._outstanding_events = ca.Events.NONE
         if self._publish_events and events != ca.Events.NONE:
-            self.postEvent(events, self._encode(self._attributes))
+            data = self._encode(self._attributes)
+            # Release attributes lock during postEvent call to prevent deadlock
+            # when the server is calling a function which changes the attributes
+            self._attributes_lock.release()
+            try:
+                self.postEvent(events, data)
+            finally:
+                self._attributes_lock.acquire()
 
     def count(self):
         return self._count
