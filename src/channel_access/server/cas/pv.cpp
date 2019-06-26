@@ -27,7 +27,9 @@ class PvProxy : public casPV {
 public:
     PvProxy(PyObject* pv)
         : pv{pv}
-    {}
+    {
+        // No GIL, don't use the python API
+    }
 
     static PyObject* name(PyObject* self, PyObject*)
     {
@@ -288,7 +290,10 @@ public:
         if (type == aitEnumInvalid) return nullptr;
 
 
-        caServer const* server = static_cast<casPV*>(proxy)->getCAS();
+        caServer const* server;
+        Py_BEGIN_ALLOW_THREADS
+            server = static_cast<casPV*>(proxy)->getCAS();
+        Py_END_ALLOW_THREADS
         if (not server) return nullptr;
 
         casEventMask mask;
@@ -301,7 +306,9 @@ public:
         }
 
         try {
-            static_cast<casPV*>(proxy)->postEvent(mask, *values);
+            Py_BEGIN_ALLOW_THREADS
+                static_cast<casPV*>(proxy)->postEvent(mask, *values);
+            Py_END_ALLOW_THREADS
         } catch (...) {
             values->unreference();
             PyErr_SetString(PyExc_RuntimeError, "Could not post events");
@@ -397,7 +404,9 @@ void pv_dealloc(PyObject* self)
     Pv* pv = reinterpret_cast<Pv*>(self);
 
     free(pv->name);
-    pv->proxy.reset();
+    Py_BEGIN_ALLOW_THREADS
+        pv->proxy.reset();
+    Py_END_ALLOW_THREADS
 
     Py_TYPE(self)->tp_free(self);
 }
@@ -408,7 +417,9 @@ PyObject* pv_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     if (not self) return nullptr;
 
     Pv* pv = reinterpret_cast<Pv*>(self);
-    pv->proxy.reset(new PvProxy(self));
+    Py_BEGIN_ALLOW_THREADS
+        pv->proxy.reset(new PvProxy(self));
+    Py_END_ALLOW_THREADS
     return self;
 }
 

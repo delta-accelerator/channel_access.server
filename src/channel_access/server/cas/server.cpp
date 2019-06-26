@@ -23,7 +23,9 @@ class ServerProxy : public caServer {
 public:
     ServerProxy(PyObject* server)
         : server{server}
-    {}
+    {
+        // No GIL, don't use the python API
+    }
 
     virtual pvExistReturn pvExistTest(casCtx const& ctx,
         caNetAddr const& clientAddress, char const* pPVAliasName) override
@@ -117,7 +119,9 @@ int server_init(PyObject* self, PyObject* args, PyObject* kwds)
 void server_dealloc(PyObject* self)
 {
     Server* server = reinterpret_cast<Server*>(self);
-    server->proxy.reset();
+    Py_BEGIN_ALLOW_THREADS
+        server->proxy.reset();
+    Py_END_ALLOW_THREADS
 
     Py_TYPE(self)->tp_free(self);
 }
@@ -136,7 +140,9 @@ PyObject* server_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
     Server* server = reinterpret_cast<Server*>(self);
     try {
-        server->proxy.reset(new ServerProxy(self));
+        Py_BEGIN_ALLOW_THREADS
+            server->proxy.reset(new ServerProxy(self));
+        Py_END_ALLOW_THREADS
     } catch (...) {
         PyErr_SetString(PyExc_RuntimeError, "Could not create ServerProxy");
         return nullptr;

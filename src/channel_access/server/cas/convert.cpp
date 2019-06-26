@@ -681,18 +681,20 @@ bool to_event_mask(PyObject* value, casEventMask& mask, caServer const& server)
     Py_DECREF(py_val);
     if (PyErr_Occurred()) return false;
 
-    if (flag_value & DBE_VALUE) {
-        mask |= server.valueEventMask();
-    }
-    if (flag_value & DBE_ARCHIVE) {
-        mask |= server.logEventMask();
-    }
-    if (flag_value & DBE_ALARM) {
-        mask |= server.alarmEventMask();
-    }
-    if (flag_value & DBE_PROPERTY) {
-        mask |= server.propertyEventMask();
-    }
+    Py_BEGIN_ALLOW_THREADS
+      if (flag_value & DBE_VALUE) {
+          mask |= server.valueEventMask();
+      }
+      if (flag_value & DBE_ARCHIVE) {
+          mask |= server.logEventMask();
+      }
+      if (flag_value & DBE_ALARM) {
+          mask |= server.alarmEventMask();
+      }
+      if (flag_value & DBE_PROPERTY) {
+          mask |= server.propertyEventMask();
+      }
+    Py_END_ALLOW_THREADS
 
     return true;
 }
