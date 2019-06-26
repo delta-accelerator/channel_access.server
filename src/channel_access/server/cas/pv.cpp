@@ -275,7 +275,6 @@ public:
         if (not PyArg_ParseTuple(args, "OO", &py_events, &py_values)) return nullptr;
 
 
-        aitEnum type = aitEnumInvalid;
         PyObject* fn = PyObject_GetAttrString(proxy->pv, "type");
         if (not fn) return nullptr;
 
@@ -283,18 +282,25 @@ public:
         Py_DECREF(fn);
         if (not result) return nullptr;
 
+        aitEnum type = aitEnumInvalid;
         bool success = to_ait_enum(result, type);
         Py_DECREF(result);
         if (not success) return nullptr;
 
-        if (type == aitEnumInvalid) return nullptr;
+        if (type == aitEnumInvalid) {
+            PyErr_SetString(PyExc_RuntimeError, "Invalid pv type");
+            return nullptr;
+        }
 
 
         caServer const* server;
         Py_BEGIN_ALLOW_THREADS
             server = static_cast<casPV*>(proxy)->getCAS();
         Py_END_ALLOW_THREADS
-        if (not server) return nullptr;
+        if (not server) {
+            // not installed into a server, do nothing
+            Py_RETURN_NONE;
+        }
 
         casEventMask mask;
         if (not to_event_mask(py_events, mask, *server)) return nullptr;
