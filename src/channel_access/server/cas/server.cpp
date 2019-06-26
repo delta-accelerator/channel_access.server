@@ -124,6 +124,10 @@ void server_dealloc(PyObject* self)
 
 PyObject* server_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
+    // cas creates non-python threads so we must ensure that python
+    // threading is initialized
+    PyEval_InitThreads();
+
     PyObject* self = type->tp_alloc(type, 0);
     if (not self) {
         PyErr_SetString(PyExc_RuntimeError, "Could not allocate new Server");
