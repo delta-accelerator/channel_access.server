@@ -729,6 +729,19 @@ class Server(object):
     def __exit__(self, *args):
         self.shutdown()
 
+    @property
+    def pvs(self):
+        """
+        Return a list of all active PV objects.
+
+        The list contains all PV objects which are alive and not garbage
+        collected.
+
+        Returns:
+          list(PV): List of active PV objects.
+        """
+        return self._server._pvs.values()
+
     def shutdown(self):
         """
         Shutdown the channel access server.
