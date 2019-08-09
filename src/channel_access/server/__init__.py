@@ -725,6 +725,7 @@ class Server(object):
         super().__init__()
         self._encoding = encoding
         self._use_numpy = use_numpy
+        self._pvs_lock = threading.Lock()
         self._pvs = weakref.WeakValueDictionary()
         self._server = _Server(self)
         self._thread = _ServerThread()
@@ -748,7 +749,8 @@ class Server(object):
         Returns:
           list(PV): List of active PV objects.
         """
-        return self._pvs.values()
+        with self._pvs_lock:
+            return list(self._pvs.values())
 
     def shutdown(self):
         """
@@ -781,13 +783,15 @@ class Server(object):
             kwargs['encoding'] = self._encoding
         if self._use_numpy is not None and 'use_numpy' not in kwargs:
             kwargs['use_numpy'] = self._use_numpy
+
         pv = PV(*args, **kwargs)
-        # Store the raw bytes name in the dictionary
-        self._pvs[pv._pv.name()] = pv
+        with self._pvs_lock:
+            self._pvs[pv._pv.name()] = pv
         return pv
 
     def _getPV(self, pv_name):
-        return self._pvs.get(pv_name)
+        with self._pvs_lock:
+            return self._pvs.get(pv_name)
 
 
 class _Server(cas.Server):
