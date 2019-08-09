@@ -718,7 +718,10 @@ class Server(object):
                 calling :meth:`createPV`.
         """
         super().__init__()
-        self._server = _Server(encoding, use_numpy)
+        self._encoding = encoding
+        self._use_numpy = use_numpy
+        self._pvs = weakref.WeakValueDictionary()
+        self._server = _Server(self)
         self._thread = _ServerThread()
 
         self._thread.start()
@@ -740,7 +743,7 @@ class Server(object):
         Returns:
           list(PV): List of active PV objects.
         """
-        return self._server._pvs.values()
+        return self._pvs.values()
 
     def shutdown(self):
         """
@@ -769,34 +772,6 @@ class Server(object):
         Returns:
             :class:`PV`: A new PV object.
         """
-        return self._server.createPV(*args, **kwargs)
-
-
-class _Server(cas.Server):
-    """
-    Server implementation.
-
-    This stores the created PVs in a weak dictionary and answers
-    the requests using it.
-    """
-    def __init__(self, encoding, use_numpy):
-        super().__init__()
-        self._encoding = encoding
-        self._use_numpy = use_numpy
-        self._pvs = weakref.WeakValueDictionary()
-
-    def pvExistTest(self, client, pv_name):
-        if pv_name in self._pvs:
-            return ExistsResponse.EXISTS_HERE
-        return ExistsResponse.NOT_EXISTS_HERE
-
-    def pvAttach(self, pv_name):
-        pv = self._pvs.get(pv_name)
-        if pv is None:
-            return AttachResponse.NOT_FOUND
-        return pv._pv
-
-    def createPV(self, *args, **kwargs):
         if self._encoding is not None and 'encoding' not in kwargs:
             kwargs['encoding'] = self._encoding
         if self._use_numpy is not None and 'use_numpy' not in kwargs:
@@ -805,6 +780,31 @@ class _Server(cas.Server):
         # Store the raw bytes name in the dictionary
         self._pvs[pv._pv.name()] = pv
         return pv
+
+    def _getPV(self, pv_name):
+        return self._pvs.get(pv_name)
+
+
+class _Server(cas.Server):
+    """
+    cas.Server implementation.
+    """
+    def __init__(self, server):
+        super().__init__()
+        self._server = server
+
+    def pvExistTest(self, client, pv_name):
+        if self._server._getPV(pv_name) is not None:
+            return ExistsResponse.EXISTS_HERE
+
+        return ExistsResponse.NOT_EXISTS_HERE
+
+    def pvAttach(self, pv_name):
+        pv = self._server._getPV(pv_name)
+        if pv is not None:
+            return pv._pv
+
+        return AttachResponse.NOT_FOUND
 
 
 class _ServerThread(threading.Thread):
