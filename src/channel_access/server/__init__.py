@@ -570,7 +570,7 @@ class PV(object):
 
     @display_limits.setter
     def display_limits(self, value):
-        assert(len(value) >= 2)
+        assert(len(value) == 2)
         with self._attributes_lock:
             self._update_meta('display_limits', value)
             self._publish()
@@ -587,7 +587,7 @@ class PV(object):
 
     @control_limits.setter
     def control_limits(self, value):
-        assert(len(value) >= 2)
+        assert(len(value) == 2)
         with self._attributes_lock:
             self._update_meta('control_limits', value)
             self._publish()
@@ -604,7 +604,7 @@ class PV(object):
 
     @warning_limits.setter
     def warning_limits(self, value):
-        assert(len(value) >= 2)
+        assert(len(value) == 2)
         with self._attributes_lock:
             self._update_meta('warning_limits', value)
             self._publish()
@@ -621,7 +621,7 @@ class PV(object):
 
     @alarm_limits.setter
     def alarm_limits(self, value):
-        assert(len(value) >= 2)
+        assert(len(value) == 2)
         with self._attributes_lock:
             self._update_meta('alarm_limits', value)
             self._publish()
