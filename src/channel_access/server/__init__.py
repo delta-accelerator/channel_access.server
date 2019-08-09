@@ -449,6 +449,17 @@ class PV(object):
         self._update_value_timestamp(value, datetime.utcnow())
 
     @property
+    def value_timestamp(self):
+        with self._attributes_lock:
+            timestamp = self._attributes.get('timestamp')
+            value = self._attributes.get('value')
+            # If the value is a numpy array whe have to create a copy
+            # because numpy arrays are not immutable.
+            if numpy and isinstance(value, numpy.ndarray):
+                value = numpy.copy(value)
+        return (value, timestamp)
+
+    @property
     def status(self):
         """
         :class:`channel_access.common.Status`: The current status.

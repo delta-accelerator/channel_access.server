@@ -70,3 +70,9 @@ def test_attribute_status_severity(server):
     pv = server.createPV('CAS:Test', ca.Type.FLOAT)
     pv.status_severity = (ca.Status.SOFT, ca.Severity.MAJOR)
     assert(pv.status_severity == (ca.Status.SOFT, ca.Severity.MAJOR))
+
+def test_attribute_value_timestamp(server):
+    pv = server.createPV('CAS:Test', ca.Type.CHAR)
+    dt = datetime(2019, 5, 21, 15, 43, 44)
+    pv._update_value_timestamp(42, dt)
+    assert(pv.value_timestamp == (42, dt))
