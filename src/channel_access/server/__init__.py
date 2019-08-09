@@ -133,7 +133,7 @@ class PV(object):
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
     """
-    def __init__(self, name, type, count=1, *, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', use_numpy=None):
+    def __init__(self, name, type_, count=1, *, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', use_numpy=None):
         """
         Args:
             name (str|bytes): Name of the PV.
@@ -153,299 +153,13 @@ class PV(object):
                 use numpy arrays if numpy support is available.
         """
         super().__init__()
-        self._name = name
-        self._pv = _PV(name, type, count, attributes, value_deadband, archive_deadband, encoding, use_numpy)
-
-    @property
-    def name(self):
-        """
-        str: The name of this PV.
-        """
-        return self._name
-
-    @property
-    def use_numpy(self):
-        """
-        bool: Wether this PV uses numpy arrays for its value.
-        """
-        return self._pv.use_numpy
-
-    @use_numpy.setter
-    def use_numpy(self, value):
-        self._pv.use_numpy = value
-
-    @property
-    def count(self):
-        """
-        int: The number of elements of this PV.
-        """
-        return self._pv.count()
-
-    @property
-    def type(self):
-        """
-        :class:`channel_access.common.Type`: The type of this PV.
-        """
-        return self._pv.type()
-
-    @property
-    def is_enum(self):
-        """
-        bool: Wether this PV is of enumeration type.
-        """
-        return self._pv.type == ca.Type.ENUM
-
-    @property
-    def attributes(self):
-        """
-        dict: The current attributes dictionary
-
-        This is writeable and updates the attributes dictionary
-        """
-        with self._pv._attributes_lock:
-            # We need a copy here for thread-safety. All keys and values
-            # are immutable so a shallow copy is enough.
-            result = self._pv._attributes.copy()
-            # If the value is a numpy array whe have to create a copy
-            # because numpy arrays are not immutable.
-            value = result.get('value')
-            if numpy and isinstance(value, numpy.ndarray):
-                result['value'] = numpy.copy(value)
-        return result
-
-    @attributes.setter
-    def attributes(self, attributes):
-        with self._pv._attributes_lock:
-            self._pv._update_attributes(attributes)
-
-    @property
-    def timestamp(self):
-        """
-        datetime: The timestamp in UTC of the last time value has changed.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('timestamp')
-
-    @property
-    def value(self):
-        """
-        The current value of the PV.
-
-        This is writeable and updates the value and timestamp.
-        """
-        with self._pv._attributes_lock:
-            value = self._pv._attributes.get('value')
-            # If the value is a numpy array whe have to create a copy
-            # because numpy arrays are not immutable.
-            if numpy and isinstance(value, numpy.ndarray):
-                value = numpy.copy(value)
-        return value
-
-    @value.setter
-    def value(self, value):
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_value(value)
-            pv._update_meta('timestamp', datetime.utcnow())
-            pv._publish()
-
-    @property
-    def status(self):
-        """
-        :class:`channel_access.common.Status`: The current status.
-
-        This is writeable and updates the status.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('status')
-
-    @status.setter
-    def status(self, value):
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_status_severity(value, pv._attributes.get('severity'))
-            pv._publish()
-
-    @property
-    def severity(self):
-        """
-        :class:`channel_access.common.Severity`: The current severity.
-
-        This is writeable and updates the severity.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('severity')
-
-    @severity.setter
-    def severity(self, value):
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_status_severity(pv._attributes.get('status'), value)
-            pv._publish()
-
-    @property
-    def status_severity(self):
-        """
-        tuple(:class:`channel_access.common.Status`, :class:`channel_access.common.Severity`): The current status and severity.
-
-        This is writeable and updates the status and severity at
-        the same time.
-        """
-        with self._pv._attributes_lock:
-            return (self._pv._attributes.get('status'), self._pv._attributes.get('severity'))
-
-    @status_severity.setter
-    def status_severity(self, value):
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_status_severity(value[0], value[1])
-            pv._publish()
-
-    @property
-    def precision(self):
-        """
-        int: The current precision.
-
-        This is writeable and update the precision.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('precision')
-
-    @precision.setter
-    def precision(self, value):
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_meta('precision', value)
-            pv._publish()
-
-    @property
-    def unit(self):
-        """
-        str|bytes: The current unit.
-
-        The type depends on the ``encoding`` parameter.
-
-        This is writeable and updates the unit.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('unit')
-
-    @unit.setter
-    def unit(self, value):
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_meta('unit', value)
-            pv._publish()
-
-    @property
-    def enum_strings(self):
-        """
-        tuple(str|bytes): The current enumeration strings.
-
-        The type depends on the ``encoding`` parameter.
-
-        This is writeable and updates the enumeration strings. The length
-        of the tuple must be equal to the ``count`` parameter.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('enum_strings')
-
-    @enum_strings.setter
-    def enum_strings(self, value):
-        assert(len(value) >= self.count)
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_meta('enum_strings', value)
-            pv._publish()
-
-    @property
-    def display_limits(self):
-        """
-        tuple(int|float, int|float): The current display limits.
-
-        This is writeable and updates the display limits:
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('display_limits')
-
-    @display_limits.setter
-    def display_limits(self, value):
-        assert(len(value) >= 2)
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_meta('display_limits', value)
-            pv._publish()
-
-    @property
-    def control_limits(self):
-        """
-        tuple(int|float, int|float): The control display limits.
-
-        This is writeable and updates the control display limits.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('control_limits')
-
-    @control_limits.setter
-    def control_limits(self, value):
-        assert(len(value) >= 2)
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_meta('control_limits', value)
-            pv._publish()
-
-    @property
-    def warning_limits(self):
-        """
-        tuple(int|float, int|float): The warning display limits.
-
-        This is writeable and updates the warning limits.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('warning_limits')
-
-    @warning_limits.setter
-    def warning_limits(self, value):
-        assert(len(value) >= 2)
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_meta('warning_limits', value)
-            pv._publish()
-
-    @property
-    def alarm_limits(self):
-        """
-        tuple(int|float, int|float): The alarm display limits.
-
-        This is writeable and updates the alarm limits.
-        """
-        with self._pv._attributes_lock:
-            return self._pv._attributes.get('alarm_limits')
-
-    @alarm_limits.setter
-    def alarm_limits(self, value):
-        assert(len(value) >= 2)
-        pv = self._pv
-        with pv._attributes_lock:
-            pv._update_meta('alarm_limits', value)
-            pv._publish()
-
-
-class _PV(cas.PV):
-    """
-    PV implementation.
-
-    This class handles all requests from the underlying binding class.
-    """
-    def __init__(self, name, type, count, attributes, value_deadband, archive_deadband, encoding, use_numpy):
-        if encoding is not None:
-            name = name.encode(encoding)
         if use_numpy is None:
             use_numpy = numpy is not None
-        super().__init__(name, use_numpy)
-        self._type = type
+        self._pv = _PV(name, self, use_numpy=use_numpy, encoding=encoding)
+
+        self._name = name
+        self._type = type_
         self._count = count
-        self._encoding = encoding
         self._value_deadband = value_deadband
         self._archive_deadband = archive_deadband
         # Used for float comparisons
@@ -455,38 +169,9 @@ class _PV(cas.PV):
         self._attributes_lock = threading.Lock()
         self._outstanding_events = ca.Events.NONE
         self._publish_events = False
-        self._attributes = default_attributes(type, count, use_numpy)
+        self._attributes = default_attributes(type_, count, use_numpy)
         if attributes is not None:
             self._update_attributes(attributes)
-
-    def _encode(self, attributes):
-        """ Convert a high-level attributes dictionary to a low-level one. """
-        result = attributes.copy()
-
-        if self._encoding is not None:
-            if 'unit' in result:
-                result['unit'] = result['unit'].encode(self._encoding)
-
-            if 'enum_strings' in result:
-                result['enum_strings'] = tuple(x.encode(self._encoding) for x in result['enum_strings'])
-
-            if 'value' in result and self._type == ca.Type.STRING:
-                result['value'] = result['value'].encode(self._encoding)
-
-        if 'timestamp' in result:
-            result['timestamp'] = ca.datetime_to_epics(result['timestamp'])
-
-        return result
-
-    def _decode(self, value, timestamp=None):
-        """ Convert a low-level value and timestamp to high-level ones. """
-        if self._encoding is not None and self._type == ca.Type.STRING:
-            value = value.decode(self._encoding)
-
-        if timestamp is not None:
-            timestamp = ca.epics_to_datetime(timestamp)
-
-        return value, timestamp
 
     # only call with attributes lock held
     def _update_status_severity(self, status, severity):
@@ -654,42 +339,351 @@ class _PV(cas.PV):
         events = self._outstanding_events
         self._outstanding_events = ca.Events.NONE
         if self._publish_events and events != ca.Events.NONE:
-            data = self._encode(self._attributes)
-            # Release attributes lock during postEvent call to prevent deadlock
+            # Release attributes lock during postEvents call to prevent deadlock
             # when the server is calling a function which changes the attributes
             self._attributes_lock.release()
             try:
-                self.postEvent(events, data)
+                self._pv.postEvents(events)
             finally:
                 self._attributes_lock.acquire()
 
-    def count(self):
-        return self._count
-
-    def type(self):
-        return self._type
-
-    def read(self):
+    def _set_publish_events(self, value):
         with self._attributes_lock:
-            return self._encode(self._attributes)
+            self._publish_events = value
 
-    def write(self, value, timestamp=None):
-        value, timestamp = self._decode(value, timestamp)
+    def _update_value_timestamp(self, value, timestamp):
         with self._attributes_lock:
             self._update_value(value)
             self._update_meta('timestamp', timestamp)
             self._publish()
+
+    @property
+    def name(self):
+        """
+        str: The name of this PV.
+        """
+        return self._name
+
+    @property
+    def use_numpy(self):
+        """
+        bool: Wether this PV uses numpy arrays for its value.
+
+        This property is writeable.
+        """
+        return self._pv.use_numpy
+
+    @use_numpy.setter
+    def use_numpy(self, value):
+        self._pv.use_numpy = value
+
+    @property
+    def count(self):
+        """
+        int: The number of elements of this PV.
+        """
+        return self._count
+
+    @property
+    def type(self):
+        """
+        :class:`channel_access.common.Type`: The type of this PV.
+        """
+        return self._type
+
+    @property
+    def is_enum(self):
+        """
+        bool: Wether this PV is of enumeration type.
+        """
+        return self._type == ca.Type.ENUM
+
+    @property
+    def attributes(self):
+        """
+        dict: The current attributes dictionary
+
+        This is writeable and updates the attributes dictionary
+        """
+        with self._attributes_lock:
+            # We need a copy here for thread-safety. All keys and values
+            # are immutable so a shallow copy is enough.
+            result = self._attributes.copy()
+            # If the value is a numpy array whe have to create a copy
+            # because numpy arrays are not immutable.
+            value = result.get('value')
+            if numpy and isinstance(value, numpy.ndarray):
+                result['value'] = numpy.copy(value)
+        return result
+
+    @attributes.setter
+    def attributes(self, attributes):
+        with self._attributes_lock:
+            self._update_attributes(attributes)
+
+    @property
+    def timestamp(self):
+        """
+        datetime: The timestamp in UTC of the last time value has changed.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('timestamp')
+
+    @property
+    def value(self):
+        """
+        The current value of the PV.
+
+        This is writeable and updates the value and timestamp.
+        """
+        with self._attributes_lock:
+            value = self._attributes.get('value')
+            # If the value is a numpy array whe have to create a copy
+            # because numpy arrays are not immutable.
+            if numpy and isinstance(value, numpy.ndarray):
+                value = numpy.copy(value)
+        return value
+
+    @value.setter
+    def value(self, value):
+        self._update_value_timestamp(value, datetime.utcnow())
+
+    @property
+    def status(self):
+        """
+        :class:`channel_access.common.Status`: The current status.
+
+        This is writeable and updates the status.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('status')
+
+    @status.setter
+    def status(self, value):
+        with self._attributes_lock:
+            self._update_status_severity(value, self._attributes.get('severity'))
+            self._publish()
+
+    @property
+    def severity(self):
+        """
+        :class:`channel_access.common.Severity`: The current severity.
+
+        This is writeable and updates the severity.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('severity')
+
+    @severity.setter
+    def severity(self, value):
+        with self._attributes_lock:
+            self._update_status_severity(self._attributes.get('status'), value)
+            self._publish()
+
+    @property
+    def status_severity(self):
+        """
+        tuple(:class:`channel_access.common.Status`, :class:`channel_access.common.Severity`): The current status and severity.
+
+        This is writeable and updates the status and severity at
+        the same time.
+        """
+        with self._attributes_lock:
+            return (self._attributes.get('status'), self._attributes.get('severity'))
+
+    @status_severity.setter
+    def status_severity(self, value):
+        with self._attributes_lock:
+            self._update_status_severity(value[0], value[1])
+            self._publish()
+
+    @property
+    def precision(self):
+        """
+        int: The current precision.
+
+        This is writeable and update the precision.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('precision')
+
+    @precision.setter
+    def precision(self, value):
+        with self._attributes_lock:
+            self._update_meta('precision', value)
+            self._publish()
+
+    @property
+    def unit(self):
+        """
+        str|bytes: The current unit.
+
+        The type depends on the ``encoding`` parameter.
+
+        This is writeable and updates the unit.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('unit')
+
+    @unit.setter
+    def unit(self, value):
+        with self._attributes_lock:
+            self._update_meta('unit', value)
+            self._publish()
+
+    @property
+    def enum_strings(self):
+        """
+        tuple(str|bytes): The current enumeration strings.
+
+        The type depends on the ``encoding`` parameter.
+
+        This is writeable and updates the enumeration strings. The length
+        of the tuple must be equal to the ``count`` parameter.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('enum_strings')
+
+    @enum_strings.setter
+    def enum_strings(self, value):
+        assert(len(value) >= self._count)
+        with self._attributes_lock:
+            self._update_meta('enum_strings', value)
+            self._publish()
+
+    @property
+    def display_limits(self):
+        """
+        tuple(int|float, int|float): The current display limits.
+
+        This is writeable and updates the display limits:
+        """
+        with self._attributes_lock:
+            return self._attributes.get('display_limits')
+
+    @display_limits.setter
+    def display_limits(self, value):
+        assert(len(value) >= 2)
+        with self._attributes_lock:
+            self._update_meta('display_limits', value)
+            self._publish()
+
+    @property
+    def control_limits(self):
+        """
+        tuple(int|float, int|float): The control display limits.
+
+        This is writeable and updates the control display limits.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('control_limits')
+
+    @control_limits.setter
+    def control_limits(self, value):
+        assert(len(value) >= 2)
+        with self._attributes_lock:
+            self._update_meta('control_limits', value)
+            self._publish()
+
+    @property
+    def warning_limits(self):
+        """
+        tuple(int|float, int|float): The warning display limits.
+
+        This is writeable and updates the warning limits.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('warning_limits')
+
+    @warning_limits.setter
+    def warning_limits(self, value):
+        assert(len(value) >= 2)
+        with self._attributes_lock:
+            self._update_meta('warning_limits', value)
+            self._publish()
+
+    @property
+    def alarm_limits(self):
+        """
+        tuple(int|float, int|float): The alarm display limits.
+
+        This is writeable and updates the alarm limits.
+        """
+        with self._attributes_lock:
+            return self._attributes.get('alarm_limits')
+
+    @alarm_limits.setter
+    def alarm_limits(self, value):
+        assert(len(value) >= 2)
+        with self._attributes_lock:
+            self._update_meta('alarm_limits', value)
+            self._publish()
+
+
+class _PV(cas.PV):
+    """
+    cas.PV implementation.
+    """
+    def __init__(self, name, pv, use_numpy, encoding):
+        if encoding is not None:
+            name = name.encode(encoding)
+        super().__init__(name, use_numpy)
+        self._pv = pv
+        self._encoding = encoding
+
+    def _encode(self, attributes):
+        """ Convert a high-level attributes dictionary to a low-level one. """
+        if self._encoding is not None:
+            if 'unit' in attributes:
+                attributes['unit'] = attributes['unit'].encode(self._encoding)
+
+            if 'enum_strings' in attributes:
+                attributes['enum_strings'] = tuple(x.encode(self._encoding) for x in attributes['enum_strings'])
+
+            if 'value' in attributes and self._pv.type == ca.Type.STRING:
+                attributes['value'] = attributes['value'].encode(self._encoding)
+
+        if 'timestamp' in attributes:
+            attributes['timestamp'] = ca.datetime_to_epics(attributes['timestamp'])
+
+        return attributes
+
+    def _decode(self, value, timestamp=None):
+        """ Convert a low-level value and timestamp to high-level ones. """
+        if self._encoding is not None and self._pv.type == ca.Type.STRING:
+            value = value.decode(self._encoding)
+
+        if timestamp is not None:
+            timestamp = ca.epics_to_datetime(timestamp)
+
+        return value, timestamp
+
+    def count(self):
+        return self._pv.count
+
+    def type(self):
+        return self._pv.type
+
+    def read(self):
+        return self._encode(self._pv.attributes)
+
+    def write(self, value, timestamp=None):
+        try:
+            self._pv._update_value_timestamp(*self._decode(value, timestamp))
+        except:
+            return False
+        else:
             return True
-        return False
 
     def interestRegister(self):
-        with self._attributes_lock:
-            self._publish_events = True
+        self._pv._set_publish_events(True)
         return True
 
     def interestDelete(self):
-        with self._attributes_lock:
-            self._publish_events = False
+        self._pv._set_publish_events(False)
+
+    def postEvents(self, events):
+        self.postEvent(events, self._encode(self._pv.attributes))
 
 
 class Server(object):
