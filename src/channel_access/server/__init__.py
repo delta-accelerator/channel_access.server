@@ -736,6 +736,7 @@ class Server(object):
 
         self._pvs_lock = threading.Lock()
         self._pvs = weakref.WeakValueDictionary()
+        self._encoded_pvs = weakref.WeakValueDictionary()
 
         self._thread.start()
 
@@ -797,12 +798,34 @@ class Server(object):
 
         pv = PV(*args, **kwargs)
         with self._pvs_lock:
-            self._pvs[pv._pv.name()] = pv
+            self._pvs[pv.name] = pv
+            self._encoded_pvs[pv._pv.name()] = pv
         return pv
 
-    def _getPV(self, pv_name):
+    def retreivePV(self, name):
+        """
+        Return the active PV object for ``name``.
+
+        Raises a :class:``KeyError`` if no PV object can be found.
+
+        This method is thread-safe.
+
+        Args:
+            name (str): Name of the PV.
+
+        Returns:
+            :class:`PV`: A new PV object.
+        """
         with self._pvs_lock:
-            return self._pvs.get(pv_name)
+            pv = self._pvs.get(name)
+
+        if pv is None:
+            raise KeyError
+        return pv
+
+    def _get_pv(self, pv_name):
+        with self._pvs_lock:
+            return self._encoded_pvs.get(pv_name)
 
 
 class _Server(cas.Server):
@@ -814,13 +837,13 @@ class _Server(cas.Server):
         self._server = server
 
     def pvExistTest(self, client, pv_name):
-        if self._server._getPV(pv_name) is not None:
+        if self._server._get_pv(pv_name) is not None:
             return ExistsResponse.EXISTS_HERE
 
         return ExistsResponse.NOT_EXISTS_HERE
 
     def pvAttach(self, pv_name):
-        pv = self._server._getPV(pv_name)
+        pv = self._server._get_pv(pv_name)
         if pv is not None:
             return pv._pv
 
