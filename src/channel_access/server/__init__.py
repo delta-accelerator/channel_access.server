@@ -373,10 +373,6 @@ class PV(object):
         """
         return self._pv.use_numpy
 
-    @use_numpy.setter
-    def use_numpy(self, value):
-        self._pv.use_numpy = value
-
     @property
     def count(self):
         """
