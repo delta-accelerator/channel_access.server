@@ -703,6 +703,8 @@ class _PV(cas.PV):
         self.postEvent(events, self._encode(attributes))
 
 
+_sentinal = object()
+
 class Server(object):
     """
     Channel access server.
@@ -737,6 +739,9 @@ class Server(object):
         self._pvs_lock = threading.Lock()
         self._pvs = weakref.WeakValueDictionary()
         self._encoded_pvs = weakref.WeakValueDictionary()
+        self._aliases = {}
+        self._encoded_aliases = {}
+        self._alias_to_encoded = {}
 
         self._thread.start()
 
@@ -761,6 +766,19 @@ class Server(object):
         """
         with self._pvs_lock:
             return list(self._pvs.values())
+
+    @property
+    def aliases(self):
+        """
+        Return a dict of all aliases.
+
+        This property is thread-safe.
+
+        Returns:
+            dict(alias: name): Alias mappings
+        """
+        with self._pvs_lock:
+            return self._aliases.copy()
 
     def shutdown(self):
         """
@@ -818,14 +836,70 @@ class Server(object):
         """
         with self._pvs_lock:
             pv = self._pvs.get(name)
+            if pv is None:
+                name = self._aliases.get(name)
+                if name is not None:
+                    pv = self._pvs.get(name)
 
         if pv is None:
             raise KeyError
         return pv
 
+    def addAlias(self, alias, name, *, encoding=_sentinal):
+        """
+        Add an alternative name for a PV.
+
+        PVs created with ``createPV`` are searched first. If none is found
+        the alias list ist checked. If an alias exists a second search
+        using the original name is made and if a PV exists it is used.
+
+        This method is thread-safe.
+
+        Args:
+            alias (str): The alternative name.
+            name (str): The original name.
+            encoding (str): The encoding used for the names.
+                            See ``encoding`` parameter of ``PV`` objects.
+        """
+        if encoding is _sentinal:
+            if self._encoding is None:
+                encoding = 'utf-8'
+            else:
+                encoding = self._encoding
+
+        if encoding is not None:
+            encoded_alias = alias.encode(encoding)
+            encoded_name = name.encode(encoding)
+        else:
+            encoded_alias = alias
+            encoded_name = name
+
+        with self._pvs_lock:
+            self._aliases[alias] = name
+            self._encoded_aliases[encoded_alias] = encoded_name
+            self._alias_to_encoded[alias] = encoded_alias
+
+    def removeAlias(self, alias):
+        """
+        Remove an alias.
+
+        Args:
+            alias (str): The alias to remove
+        """
+        with self._pvs_lock:
+            del self._aliases[alias]
+            encoded_alias = self._alias_to_encoded.get(alias)
+            del self._alias_to_encoded[alias]
+            del self._encoded_aliases[encoded_alias]
+
     def _get_pv(self, pv_name):
         with self._pvs_lock:
-            return self._encoded_pvs.get(pv_name)
+            pv = self._encoded_pvs.get(pv_name)
+            if pv is None:
+                pv_name = self._encoded_aliases.get(pv_name)
+                if pv_name is not None:
+                    pv = self._encoded_pvs.get(pv_name)
+        return pv
 
 
 class _Server(cas.Server):
