@@ -553,7 +553,7 @@ class PV(object):
 
     @enum_strings.setter
     def enum_strings(self, value):
-        assert(len(value) >= self._count)
+        assert(len(value) <= 16)
         with self._attributes_lock:
             self._update_meta('enum_strings', value)
             self._publish()
