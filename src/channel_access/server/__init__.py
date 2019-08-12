@@ -339,11 +339,20 @@ class PV(object):
         events = self._outstanding_events
         self._outstanding_events = ca.Events.NONE
         if self._publish_events and events != ca.Events.NONE:
+            # We need a copy here for thread-safety. All keys and values
+            # are immutable so a shallow copy is enough.
+            attributes = self._attributes.copy()
+            # If the value is a numpy array whe have to create a copy
+            # because numpy arrays are not immutable.
+            value = attributes.get('value')
+            if numpy and isinstance(value, numpy.ndarray):
+                attributes['value'] = numpy.copy(value)
+
             # Release attributes lock during postEvents call to prevent deadlock
             # when the server is calling a function which changes the attributes
             self._attributes_lock.release()
             try:
-                self._pv.postEvents(events)
+                self._pv.postEvents(events, attributes)
             finally:
                 self._attributes_lock.acquire()
 
@@ -689,8 +698,8 @@ class _PV(cas.PV):
     def interestDelete(self):
         self._pv._set_publish_events(False)
 
-    def postEvents(self, events):
-        self.postEvent(events, self._encode(self._pv.attributes))
+    def postEvents(self, events, attributes):
+        self.postEvent(events, self._encode(attributes))
 
 
 class Server(object):
