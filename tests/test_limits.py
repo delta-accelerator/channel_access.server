@@ -32,7 +32,7 @@ def test_control_limits_enum(server):
 
 @pytest.mark.parametrize("type_", common.INT_TYPES + common.FLOAT_TYPES)
 def test_control_limits_array(server, type_):
-    pv = server.createPV('CAS:Test', type_, count=3, attributes = {
+    pv = server.createPV('CAS:Test', type_, attributes = {
         'control_limits': (-5, 10)
     }, use_numpy=False)
     pv.value = (1, 2, 3)
@@ -45,7 +45,7 @@ def test_control_limits_array(server, type_):
 def test_control_limits_array_numpy(server, type_):
     import numpy
 
-    pv = server.createPV('CAS:Test', type_, count=3, attributes = {
+    pv = server.createPV('CAS:Test', type_, attributes = {
         'control_limits': (-5, 10)
     }, use_numpy=True)
     test_values = numpy.array([ 1, 2, 3 ])
@@ -79,7 +79,7 @@ def test_alarm_limits(server, type_):
 
 @pytest.mark.parametrize("type_", common.INT_TYPES + common.FLOAT_TYPES)
 def test_control_limits_array(server, type_):
-    pv = server.createPV('CAS:Test', type_, count=3, attributes = {
+    pv = server.createPV('CAS:Test', type_, attributes = {
         'warning_limits': (-5, 10),
         'alarm_limits': (-10, 15)
     }, use_numpy=False)
@@ -123,7 +123,7 @@ def test_control_limits_array(server, type_):
 def test_control_limits_array_numpy(server, type_):
     import numpy
 
-    pv = server.createPV('CAS:Test', type_, count=3, attributes = {
+    pv = server.createPV('CAS:Test', type_, attributes = {
         'warning_limits': (-5, 10),
         'alarm_limits': (-10, 15)
     }, use_numpy=True)
