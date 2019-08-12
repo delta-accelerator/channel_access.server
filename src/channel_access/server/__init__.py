@@ -170,6 +170,7 @@ class PV(object):
         self._outstanding_events = ca.Events.NONE
         self._publish_events = False
         self._attributes = default_attributes(type_, count, use_numpy)
+
         if attributes is not None:
             self._update_attributes(attributes)
 
@@ -339,22 +340,39 @@ class PV(object):
         events = self._outstanding_events
         self._outstanding_events = ca.Events.NONE
         if self._publish_events and events != ca.Events.NONE:
-            # We need a copy here for thread-safety. All keys and values
-            # are immutable so a shallow copy is enough.
-            attributes = self._attributes.copy()
-            # If the value is a numpy array whe have to create a copy
-            # because numpy arrays are not immutable.
-            value = attributes.get('value')
-            if numpy and isinstance(value, numpy.ndarray):
-                attributes['value'] = numpy.copy(value)
+            # We need a copy here for thread-safety. This method can
+            # be called concurrently multiple times and because we
+            # release the lock when posting the atomicity os this
+            # call is not ensured without a copy.
+            attributes = self._copy_attributes()
 
             # Release attributes lock during postEvents call to prevent deadlock
-            # when the server is calling a function which changes the attributes
+            # when the server is calling a method which changes the attributes
             self._attributes_lock.release()
             try:
                 self._pv.postEvents(events, attributes)
             finally:
                 self._attributes_lock.acquire()
+
+    # only call with attributes lock held
+    def _copy_attributes(self):
+        # All keys and values are immutable so a shallow copy is enough.
+        attributes = self._attributes.copy()
+        # If the value is a numpy array whe have to create a copy
+        # because numpy arrays are not immutable.
+        value = attributes.get('value')
+        if numpy and isinstance(value, numpy.ndarray):
+            attributes['value'] = numpy.copy(value)
+        return attributes
+
+    # only call with attributes lock held
+    def _copy_value(self):
+        value = self._attributes.get('value')
+        # If the value is a numpy array whe have to create a copy
+        # because numpy arrays are not immutable.
+        if numpy and isinstance(value, numpy.ndarray):
+            value = numpy.copy(value)
+        return value
 
     def _set_publish_events(self, value):
         with self._attributes_lock:
@@ -411,15 +429,7 @@ class PV(object):
         This is writeable and updates the attributes dictionary
         """
         with self._attributes_lock:
-            # We need a copy here for thread-safety. All keys and values
-            # are immutable so a shallow copy is enough.
-            result = self._attributes.copy()
-            # If the value is a numpy array whe have to create a copy
-            # because numpy arrays are not immutable.
-            value = result.get('value')
-            if numpy and isinstance(value, numpy.ndarray):
-                result['value'] = numpy.copy(value)
-        return result
+            return self._copy_attributes()
 
     @attributes.setter
     def attributes(self, attributes):
@@ -442,12 +452,7 @@ class PV(object):
         This is writeable and updates the value and timestamp.
         """
         with self._attributes_lock:
-            value = self._attributes.get('value')
-            # If the value is a numpy array whe have to create a copy
-            # because numpy arrays are not immutable.
-            if numpy and isinstance(value, numpy.ndarray):
-                value = numpy.copy(value)
-        return value
+            return self._copy_value()
 
     @value.setter
     def value(self, value):
@@ -457,11 +462,7 @@ class PV(object):
     def value_timestamp(self):
         with self._attributes_lock:
             timestamp = self._attributes.get('timestamp')
-            value = self._attributes.get('value')
-            # If the value is a numpy array whe have to create a copy
-            # because numpy arrays are not immutable.
-            if numpy and isinstance(value, numpy.ndarray):
-                value = numpy.copy(value)
+            value = self._copy_value()
         return (value, timestamp)
 
     @property
