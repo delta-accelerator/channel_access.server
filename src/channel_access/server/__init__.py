@@ -145,7 +145,7 @@ class PV(object):
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
     """
-    def __init__(self, name, type_, *, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', use_numpy=None):
+    def __init__(self, name, type_, *, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', monitor=None, use_numpy=None):
         """
         Args:
             name (str|bytes): Name of the PV.
@@ -160,6 +160,8 @@ class PV(object):
             archive_deadband (int|float): If any value changes more than this
                 deadband an archive event is fired.
                 This is only used for numerical PVs.
+            monitor (callable):
+                This is the initial value for the monitor handler.
             encoding (str): The encoding used for the PV name and string
                 attributes. If ``None`` these values must be bytes.
             use_numpy (bool): If ``True`` use numpy arrays. If ``None``
@@ -179,6 +181,7 @@ class PV(object):
         self._absolute_tolerance = 1e-08
 
         self._attributes_lock = threading.Lock()
+        self._monitor_handler = monitor
         self._outstanding_events = ca.Events.NONE
         self._publish_events = False
         self._attributes = default_attributes(type_, count, use_numpy)
@@ -357,19 +360,24 @@ class PV(object):
     def _publish(self):
         """ Post events if necessary. """
         events = self._outstanding_events
+        publish_events = self._publish_events
+        monitor_handler = self._monitor_handler
         self._outstanding_events = ca.Events.NONE
-        if self._publish_events and events != ca.Events.NONE:
+        if events != ca.Events.NONE:
             # We need a copy here for thread-safety. This method can
             # be called concurrently multiple times and because we
-            # release the lock when posting the atomicity os this
+            # release the lock when posting the atomicity of this
             # call is not ensured without a copy.
             attributes = self._copy_attributes()
 
-            # Release attributes lock during postEvents call to prevent deadlock
-            # when the server is calling a method which changes the attributes
+            # Release attributes lock during calls to prevent deadlock
+            # when a method which changes the attributes is called.
             self._attributes_lock.release()
             try:
-                self._pv.postEvents(events, attributes)
+                if publish_events:
+                    self._pv.postEvents(events, attributes)
+                if monitor_handler:
+                    monitor_handler(self, attributes)
             finally:
                 self._attributes_lock.acquire()
 
@@ -453,6 +461,34 @@ class PV(object):
         bool: Wether this PV is of enumeration type.
         """
         return self._type == ca.Type.ENUM
+
+    @property
+    def monitor_handler(self):
+        """
+        callable: The monitor handler.
+
+        The monitor handler is called when the attributes change.
+        The handler might be called from an unspecified thread and must be
+        thread-safe. It should also not block.
+
+        This is writeable and changes the monitor handler. Set it to
+        ``None`` to disable the handler.
+
+        **Signature**: ``fn(pv, attributes)``
+
+        **Parameters**:
+
+            * **pv** (:class:`PV`): The :class:`PV` object with the
+              changed values.
+            * **attributes** (dict): A attributes dictionary with the new attributes.
+        """
+        with self._attributes_lock:
+            return self._monitor_handler
+
+    @monitor_handler.setter
+    def monitor_handler(self, handler):
+        with self._attributes_lock:
+            self._monitor_handler = handler
 
     @property
     def attributes(self):

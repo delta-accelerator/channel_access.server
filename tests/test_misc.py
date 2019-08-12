@@ -30,3 +30,23 @@ def test_dynamic_size(server):
     value = list(map(int, common.caget('CAS:Test', array=True)))
     assert(len(value) == 3)
 
+def test_monitor_intern(server):
+    received = None
+    def handler(pv, attributes):
+        nonlocal received
+        received = attributes['value']
+
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, monitor=handler)
+    pv.value = 1
+    assert(received == 1)
+
+
+def test_monitor_extern(server):
+    received = None
+    def handler(pv, attributes):
+        nonlocal received
+        received = attributes['value']
+
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, monitor=handler)
+    common.caput('CAS:Test', 1)
+    assert(received == 1)
