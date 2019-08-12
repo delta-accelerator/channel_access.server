@@ -30,7 +30,16 @@ except ImportError:
         return diff <= abs(rel_tol * b) or diff <= abs(rel_tol * a) or diff < abs_tol
 
 
-def default_attributes(type_, count, use_numpy):
+def is_sequence(value):
+    """
+    Return ``True`` if ``value`` is a sequence type.
+
+    Sequences are types which can be iterated over but are not strings.
+    """
+    return not isinstance(value, str) and hasattr(type(value), '__iter__')
+
+
+def default_attributes(type_, count=1, use_numpy=None):
     """
     Return the default attributes dictionary for new PVs.
 
@@ -42,6 +51,9 @@ def default_attributes(type_, count, use_numpy):
     Returns:
         dict: Attributes dictionary.
     """
+    if use_numpy is None:
+        use_numpy = numpy is not None
+
     result = {
         'status': ca.Status.UDF,
         'severity': ca.Severity.INVALID,
@@ -133,12 +145,13 @@ class PV(object):
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
     """
-    def __init__(self, name, type_, count=1, *, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', use_numpy=None):
+    def __init__(self, name, type_, *, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', use_numpy=None):
         """
         Args:
             name (str|bytes): Name of the PV.
                 If ``encoding`` is ``None`` this must be raw bytes.
             type (:class:`channel_access.common.Type`): The PV type.
+            count (int): The initial array length. A length of 1 is a scalar PV.
             attributes (dict): Attributes dictionary with the initial attributes.
                 These will override the default attributes.
             value_deadband (int|float): If any value changes more than this
@@ -159,7 +172,6 @@ class PV(object):
 
         self._name = name
         self._type = type_
-        self._count = count
         self._value_deadband = value_deadband
         self._archive_deadband = archive_deadband
         # Used for float comparisons
@@ -195,10 +207,10 @@ class PV(object):
 
             if ctrl_limits is not None and ctrl_limits[0] < ctrl_limits[1]:
                 clamp = lambda v: max(min(v, ctrl_limits[1]), ctrl_limits[0])
-                if self._count == 1:
-                    return clamp(value)
-                else:
+                if is_sequence(value):
                     return tuple(map(clamp, value))
+                else:
+                    return clamp(value)
         return value
 
     # only call with attributes lock held
@@ -210,13 +222,13 @@ class PV(object):
             alarm_limits = self._attributes.get('alarm_limits')
             warn_limits = self._attributes.get('warning_limits')
 
-            if self._count == 1:
-                lowest = value
-                highest = value
-            else:
+            if is_sequence(value):
                 # For arrays use the extreme values
                 lowest = min(value)
                 highest = max(value)
+            else:
+                lowest = value
+                highest = value
 
             if warn_limits is not None and warn_limits[0] < warn_limits[1]:
                 if lowest < warn_limits[0] and highest > warn_limits[1]:
@@ -262,30 +274,37 @@ class PV(object):
         status, severity = self._calculate_status_severity(value)
 
         old_value = self._attributes.get('value')
-        if self._type in (ca.Type.FLOAT, ca.Type.DOUBLE):
-            isclose = lambda a, b: _isclose(a, b, rel_tol=self._relative_tolerance, abs_tol=self._absolute_tolerance)
-            if self._count == 1:
-                value_changed = not isclose(value, old_value)
+        # If old and new_value differ in wether they are sequences or not
+        # we can't compare them.
+        if is_sequence(value) != is_sequence(old_value):
+            value_changed = True
+        else:
+            if self._type in (ca.Type.FLOAT, ca.Type.DOUBLE):
+                isclose = lambda a, b: _isclose(a, b, rel_tol=self._relative_tolerance, abs_tol=self._absolute_tolerance)
+                if is_sequence(value):
+                    if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
+                        value_changed = not numpy.allclose(value, old_value, rtol=self._relative_tolerance, atol=self._absolute_tolerance)
+                    else:
+                        value_changed = not all(map(lambda x: isclose(x[0], x[1]), zip(value, old_value)))
+                else:
+                    value_changed = not isclose(value, old_value)
             else:
                 if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
-                    value_changed = not numpy.allclose(value, old_value, rtol=self._relative_tolerance, atol=self._absolute_tolerance)
+                    value_changed = not numpy.all(numpy.equal(value, old_value))
                 else:
-                    value_changed = not all(map(lambda x: isclose(x[0], x[1]), zip(value, old_value)))
-        else:
-            if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
-                value_changed = not numpy.all(numpy.equal(value, old_value))
-            else:
-                value_changed = value != old_value
+                    value_changed = value != old_value
 
         if value_changed:
             self._attributes['value'] = value
-            if self._type not in (ca.Type.STRING, ca.Type.ENUM):
-                if self._count == 1:
-                    diff = abs(value - old_value)
-                else:
+            # If old and new_value differ in wether they are sequences or not
+            # we can't use the deadbands.
+            if self._type not in (ca.Type.STRING, ca.Type.ENUM) and is_sequence(value) == is_sequence(old_value):
+                if is_sequence(value):
                     # Look at the maximum difference between the old values
                     # and the new ones.
                     diff = max(map(lambda x: abs(x[0] - x[1]), zip(value, old_value)))
+                else:
+                    diff = abs(value - old_value)
                 if diff >= self._value_deadband:
                     self._outstanding_events |= ca.Events.VALUE
                 if diff >= self._archive_deadband:
@@ -401,11 +420,25 @@ class PV(object):
         return self._pv.use_numpy
 
     @property
+    def is_array(self):
+        """
+        bool: Wether this PV is an array.
+        """
+        with self._attributes_lock:
+            value = self._attributes.get('value')
+        return is_sequence(value)
+
+    @property
     def count(self):
         """
         int: The number of elements of this PV.
         """
-        return self._count
+        with self._attributes_lock:
+            value = self._attributes.get('value')
+        if is_sequence(value):
+            return len(value)
+        else:
+            return 1
 
     @property
     def type(self):
@@ -450,6 +483,9 @@ class PV(object):
         The current value of the PV.
 
         This is writeable and updates the value and timestamp.
+
+        Wether the PV is an array and the size of the array is dependent
+        on the type of the value attribute.
         """
         with self._attributes_lock:
             return self._copy_value()
