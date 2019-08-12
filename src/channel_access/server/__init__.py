@@ -695,7 +695,7 @@ class _PV(cas.PV):
 
 class Server(object):
     """
-    Threaded channel access server.
+    Channel access server.
 
     On creation this class creates a server thread which processes
     channel access messages.
@@ -742,6 +742,8 @@ class Server(object):
         The list contains all PV objects which are alive and not garbage
         collected.
 
+        This property is thread-safe.
+
         Returns:
           list(PV): List of active PV objects.
         """
@@ -771,6 +773,8 @@ class Server(object):
         If a PV with an already existing name is created the server will
         use the new PV and ignore the other one. Connections made to the
         old PV remain active and use the old PV object.
+
+        This method is thread-safe.
 
         Returns:
             :class:`PV`: A new PV object.

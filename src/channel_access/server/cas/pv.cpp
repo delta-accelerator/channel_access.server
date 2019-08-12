@@ -432,7 +432,10 @@ PyObject* pv_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 // we can't put these inside the PvProxy class
 PyDoc_STRVAR(name__doc__, R"(name()
 
-Return the name of the PV.
+Return the name of the PV. This is the name used on-the-wire, possible
+encoded with some text encoding.
+
+This method is thread-safe.
 
 Returns:
     bytes: The name of the PV given at initialization.
@@ -443,12 +446,16 @@ Destroy the PV.
 
 Request from the server when the PV handler object is no longer
 needed.
+
+This is called from an unspecified thread.
 )");
 PyDoc_STRVAR(type__doc__, R"(type()
 
 Return the type of the PV.
 
-This is called from the server.
+This is called from the server when the PV type is needed.
+
+This is called from an unspecified thread.
 
 Returns:
     :class:`channel_access.common.Type`: Type of the PV.
@@ -457,7 +464,10 @@ PyDoc_STRVAR(count__doc__, R"(count()
 
 Return the number of elements.
 
-This is called from the server.
+This is called from the server when the number of elements is needed.
+Return a value of 1 for a scalar PV.
+
+This is called from an unspecified thread.
 
 Returns:
     int: Number of elements.
@@ -468,6 +478,8 @@ Retreive the attributes of the PV.
 
 This is called from the server when a get request is processed.
 
+This is called from an unspecified thread.
+
 Returns:
     dict: An attributes dictionary with all PV attributes.
 )");
@@ -476,6 +488,8 @@ PyDoc_STRVAR(write__doc__, R"(write(value, timestamp)
 Set the value of the PV.
 
 This is called from the server when a put request is processed.
+
+This is called from an unspecified thread.
 
 Args:
     value: The new value. The type depends on the PV type.
@@ -492,6 +506,8 @@ This should be called when any attributes change and events are requested
 (:meth:`interestRegister()`). Depending on which attributes changed the
 ``event_mask`` should be set accordingly.
 
+This method is thread-safe.
+
 Args:
     event_mask (:class:`channel_access.common.Events`): This mask describes
         the events to post.
@@ -500,20 +516,24 @@ Args:
 )");
 PyDoc_STRVAR(interestRegister__doc__, R"(interestRegister()
 
-Inform server about changes.
+Request to inform the server about changes.
 
 Request from the server that events should be posted
-when attributes change.
+when attributes change, see :meth:`postEvents()`.
+
+This is called from an unspecified thread.
 
 Returns:
     bool: ``True`` if the request was successful, ``False`` otherwise.
 )");
 PyDoc_STRVAR(interestDelete__doc__, R"(interestDelete()
 
-Don't inform server about changes.
+Don't inform server about changes any more.
 
 Request from the server that events should not be posted any more
 when attributes change.
+
+This is called from an unspecified thread.
 )");
 
 PyMethodDef pv_methods[] = {
@@ -532,6 +552,9 @@ PyMethodDef pv_methods[] = {
 PyDoc_STRVAR(use_numpy__doc__, R"(use_numpy
 
 bool: ``True`` if numpy arrays are used, ``False`` otherwise.
+
+This can be changed any time. For any new request the new value is used
+when processing the value attribute.
 )");
 PyMemberDef pv_members[] = {
     {"use_numpy",  T_BOOL,   offsetof(Pv, use_numpy), 0, use_numpy__doc__},
@@ -545,6 +568,9 @@ A user defined class should derive from this class and override
 the appropiate methods to inform the server about the properties
 of the PV and handle requests for it. The default implementations
 represent a scalar string PV which rejects all read/write access.
+
+Care must be taken when implementing the methods because they are
+called from unspecified threads and must be thread-safe.
 
 The following keys can occur in an attributes dictionary:
 

@@ -154,6 +154,9 @@ PyDoc_STRVAR(pvExistTest__doc__, R"(pvExistTest(address, name)
 
 Return wether/where the PV ``name`` exists.
 
+This method is called from an unspecified thread when a search request is
+received.
+
 Args:
     address (tuple): A tuple ``(ip, port)`` which identifies a client.
         The client IP address is encoded as a 32bit integer.
@@ -166,6 +169,9 @@ Returns:
 PyDoc_STRVAR(pvAttach__doc__, R"(pvAttach(name)
 
 Return a PV handler object for ``name``.
+
+This method is called from an unspecified thread when a channel is
+created by a client.
 
 If a :class:`PV` instance is returned then the server will hold
 a reference to it as long as it is needed.
@@ -196,6 +202,9 @@ This class handles requests for PV connections.
 When creating a channel access server a user defined class should derive
 from this class and implement the methods :meth:`pvExistTest` and
 :meth:`pvAttach`. The default implementations reject all requests.
+
+It is unspecified if the server uses multiple threads internally. Care
+must be taken when implementing the above methods.
 )");
 PyTypeObject server_type = {
     PyVarObject_HEAD_INIT(nullptr, 0)
