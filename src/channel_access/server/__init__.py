@@ -30,7 +30,7 @@ except ImportError:
         return diff <= abs(rel_tol * b) or diff <= abs(rel_tol * a) or diff < abs_tol
 
 
-def default_attributes(type, count, use_numpy):
+def default_attributes(type_, count, use_numpy):
     """
     Return the default attributes dictionary for new PVs.
 
@@ -48,7 +48,7 @@ def default_attributes(type, count, use_numpy):
         'timestamp': datetime.utcnow()
     }
 
-    if type == ca.Type.STRING:
+    if type_ == ca.Type.STRING:
         result['value'] = ''
     else:
         if count == 1:
@@ -63,9 +63,9 @@ def default_attributes(type, count, use_numpy):
         result['display_limits'] = (0, 0)
         result['alarm_limits'] = (0, 0)
         result['warning_limits'] = (0, 0)
-        if type == ca.Type.FLOAT or type == ca.Type.DOUBLE:
+        if type_ == ca.Type.FLOAT or type_ == ca.Type.DOUBLE:
             result['precision'] = 0
-        if type == ca.Type.ENUM:
+        if type_ == ca.Type.ENUM:
             result['enum_strings'] = ('',)
 
     return result
@@ -640,7 +640,7 @@ class _PV(cas.PV):
     """
     cas.PV implementation.
     """
-    def __init__(self, name, pv, use_numpy, encoding):
+    def __init__(self, name, pv, *, use_numpy, encoding):
         if encoding is not None:
             name = name.encode(encoding)
         super().__init__(name, use_numpy)
@@ -730,10 +730,11 @@ class Server(object):
         super().__init__()
         self._encoding = encoding
         self._use_numpy = use_numpy
-        self._pvs_lock = threading.Lock()
-        self._pvs = weakref.WeakValueDictionary()
         self._server = _Server(self)
         self._thread = _ServerThread()
+
+        self._pvs_lock = threading.Lock()
+        self._pvs = weakref.WeakValueDictionary()
 
         self._thread.start()
 
@@ -788,9 +789,9 @@ class Server(object):
         Returns:
             :class:`PV`: A new PV object.
         """
-        if self._encoding is not None and 'encoding' not in kwargs:
+        if 'encoding' not in kwargs and self._encoding is not None:
             kwargs['encoding'] = self._encoding
-        if self._use_numpy is not None and 'use_numpy' not in kwargs:
+        if 'use_numpy' not in kwargs and self._use_numpy is not None:
             kwargs['use_numpy'] = self._use_numpy
 
         pv = PV(*args, **kwargs)
