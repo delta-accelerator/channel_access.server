@@ -75,7 +75,10 @@ def caget(pv, as_string=False, array=False):
         return stdout
 
 
-def caput(pv, value):
+def caput(pv, value, timeout=None):
+    if timeout is None:
+        timeout = 0.1
+
     args = []
     if isinstance(value, list) or isinstance(value, tuple) or (cas.numpy and isinstance(value, cas.numpy.ndarray)):
         args.append('-a')
@@ -83,7 +86,7 @@ def caput(pv, value):
     else:
         values = [ str(value) ]
     try:
-        result = cacmd(['caput', '-t', '-w', '0.1'] + args + [ pv ] + values)
+        result = cacmd(['caput', '-c', '-t', '-w', str(timeout)] + args + [ pv ] + values)
     except subprocess.CalledProcessError:
         raise CaputError
 
