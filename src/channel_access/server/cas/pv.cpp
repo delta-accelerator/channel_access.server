@@ -8,6 +8,7 @@
 
 #include "cas.hpp"
 #include "convert.hpp"
+#include "async.hpp"
 
 namespace cas {
 namespace {
@@ -195,21 +196,29 @@ public:
             }
 
             if (type != aitEnumInvalid) {
-                PyObject* fn = PyObject_GetAttrString(pv, "read");
-                if (fn) {
-                    PyObject* result = PyObject_CallFunction(fn, nullptr);
-                    if (PyErr_Occurred()) {
-                        PyErr_WriteUnraisable(fn);
-                        PyErr_Clear();
-                    }
-                    Py_DECREF(fn);
+                PyObject* context = create_async_context(ctx);
+                if (context) {
+                    PyObject* fn = PyObject_GetAttrString(pv, "read");
+                    if (fn) {
+                        PyObject* args = Py_BuildValue("(O)", context);
+                        if (args) {
+                            PyObject* result = PyObject_CallObject(fn, args);
+                            if (PyErr_Occurred()) {
+                                PyErr_WriteUnraisable(fn);
+                                PyErr_Clear();
+                            }
 
-                    if (result and result != Py_None) {
-                        if (to_gdd(result, type, prototype)) {
-                            ret = S_casApp_success;
+                            if (result and result != Py_None) {
+                                if (to_gdd(result, type, prototype)) {
+                                    ret = S_casApp_success;
+                                }
+                                Py_DECREF(result);
+                            }
+                            Py_DECREF(args);
                         }
-                        Py_DECREF(result);
+                        Py_DECREF(fn);
                     }
+                    Py_DECREF(context);
                 }
             }
 
@@ -232,26 +241,33 @@ public:
 
         caStatus ret = S_casApp_noSupport;
         PyGILState_STATE gstate = PyGILState_Ensure();
-            PyObject* args = from_gdd(value, pv_struct->use_numpy);
-            if (args) {
-                PyObject* fn = PyObject_GetAttrString(pv, "write");
-                if (fn) {
-                    PyObject* result = PyObject_CallObject(fn, args);
-                    if (PyErr_Occurred()) {
-                        PyErr_WriteUnraisable(fn);
-                        PyErr_Clear();
-                    }
-                    Py_DECREF(fn);
+            PyObject* value_timestamp = from_gdd(value, pv_struct->use_numpy);
+            if (value_timestamp) {
+                PyObject* context = create_async_context(ctx);
+                if (context) {
+                    PyObject* fn = PyObject_GetAttrString(pv, "write");
+                    if (fn) {
+                        PyObject* args = Py_BuildValue("(OOO)", PyTuple_GET_ITEM(value_timestamp, 0), PyTuple_GET_ITEM(value_timestamp, 1), context);
+                        if (args) {
+                            PyObject* result = PyObject_CallObject(fn, args);
+                            if (PyErr_Occurred()) {
+                                PyErr_WriteUnraisable(fn);
+                                PyErr_Clear();
+                            }
 
-                    if (result) {
-                        if (PyObject_IsTrue(result)) {
-                            ret = S_casApp_success;
+                            if (result) {
+                                if (PyObject_IsTrue(result)) {
+                                    ret = S_casApp_success;
+                                }
+                                Py_DECREF(result);
+                            }
+                            Py_DECREF(args);
                         }
-                        Py_DECREF(result);
+                        Py_DECREF(fn);
                     }
+                    Py_DECREF(context);
                 }
-
-                Py_DECREF(args);
+                Py_DECREF(value_timestamp);
             }
 
             if (PyErr_Occurred()) {

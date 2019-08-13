@@ -753,10 +753,10 @@ class _PV(cas.PV):
     def type(self):
         return self._pv.type
 
-    def read(self):
+    def read(self, context):
         return self._encode(self._pv.attributes)
 
-    def write(self, value, timestamp=None):
+    def write(self, value, timestamp, context):
         try:
             self._pv._update_value_timestamp(*self._decode(value, timestamp))
         except:

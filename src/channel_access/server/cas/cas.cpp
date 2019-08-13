@@ -11,6 +11,7 @@
 
 #include "server.hpp"
 #include "pv.hpp"
+#include "async.hpp"
 
 namespace cas {
 
@@ -122,6 +123,7 @@ PyMODINIT_FUNC PyInit_cas(void)
 
     int result = -1;
     PyObject* module = nullptr, *server_type = nullptr, *pv_type = nullptr;
+    PyObject* async_context_type = nullptr;
     PyObject* ca_module = nullptr;
     PyObject* enum_module = nullptr, *enum_class = nullptr;
 
@@ -184,6 +186,9 @@ PyMODINIT_FUNC PyInit_cas(void)
         goto error;
     }
 
+    async_context_type = cas::create_async_context_type();
+    if (not async_context_type) goto error;
+
     Py_DECREF(enum_class);
     Py_DECREF(enum_module);
     Py_DECREF(ca_module);
@@ -192,6 +197,7 @@ PyMODINIT_FUNC PyInit_cas(void)
 error:
     Py_XDECREF(pv_type);
     Py_XDECREF(server_type);
+    Py_XDECREF(async_context_type);
     Py_XDECREF(cas::enum_attach);
     Py_XDECREF(cas::enum_exists);
     Py_XDECREF(cas::enum_severity);
