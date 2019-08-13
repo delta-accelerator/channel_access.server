@@ -249,7 +249,9 @@ public:
                     Py_DECREF(value_timestamp);
 
                     if (result) {
-                        if (PyObject_IsTrue(result)) {
+                        if (give_async_write_to_server(result)) {
+                            ret = S_casApp_asyncCompletion;
+                        } else if (PyObject_IsTrue(result)) {
                             ret = S_casApp_success;
                         }
                         Py_DECREF(result);

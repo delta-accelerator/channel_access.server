@@ -83,6 +83,23 @@ def default_attributes(type_, count=1, use_numpy=None):
     return result
 
 
+def failing_write_handler(pv, value, timestamp, context):
+    return False
+
+
+class AsyncWrite(cas.AsyncWrite):
+    """
+    Asyncronous write completion class.
+    """
+    def __init__(self, pv, context):
+        super().__init__(context)
+        self._pv = pv
+
+    def complete(self, value, timestamp):
+        self._pv._update_value_timestamp(value, timestamp)
+        super().complete()
+
+
 class PV(object):
     """
     A channel access PV.
@@ -145,7 +162,10 @@ class PV(object):
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
     """
-    def __init__(self, name, type_, *, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', monitor=None, use_numpy=None):
+    def __init__(self, name, type_, *, count=1, attributes=None,
+            value_deadband=0, archive_deadband=0,
+            write_handler=None,
+            encoding='utf-8', monitor=None, use_numpy=None):
         """
         Args:
             name (str|bytes): Name of the PV.
@@ -160,6 +180,8 @@ class PV(object):
             archive_deadband (int|float): If any value changes more than this
                 deadband an archive event is fired.
                 This is only used for numerical PVs.
+            write_handler (callable): A callable used as the write handler
+                for write requests from a client.
             monitor (callable):
                 This is the initial value for the monitor handler.
             encoding (str): The encoding used for the PV name and string
@@ -170,7 +192,8 @@ class PV(object):
         super().__init__()
         if use_numpy is None:
             use_numpy = numpy is not None
-        self._pv = _PV(name, self, use_numpy=use_numpy, encoding=encoding)
+        self._pv = _PV(name, self, use_numpy=use_numpy, encoding=encoding,
+            write_handler=write_handler)
 
         self._name = name
         self._type = type_
@@ -713,12 +736,13 @@ class _PV(cas.PV):
     """
     cas.PV implementation.
     """
-    def __init__(self, name, pv, *, use_numpy, encoding):
+    def __init__(self, name, pv, *, use_numpy, encoding, write_handler):
         if encoding is not None:
             name = name.encode(encoding)
         super().__init__(name, use_numpy)
         self._pv = pv
         self._encoding = encoding
+        self._write_handler = write_handler
 
     def _encode(self, attributes):
         """ Convert a high-level attributes dictionary to a low-level one. """
@@ -757,8 +781,19 @@ class _PV(cas.PV):
         return self._encode(self._pv.attributes)
 
     def write(self, value, timestamp, context):
+        value, timestamp = self._decode(value, timestamp)
+
+        if self._write_handler:
+            result = self._write_handler(self._pv, value, timestamp, context)
+
+            if isinstance(result, AsyncWrite) or not result:
+                return result
+            # Test for the True singleton
+            if result is not True:
+                value, timestamp = result
+
         try:
-            self._pv._update_value_timestamp(*self._decode(value, timestamp))
+            self._pv._update_value_timestamp(value, timestamp)
         except:
             return False
         else:
