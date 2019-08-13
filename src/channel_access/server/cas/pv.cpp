@@ -120,13 +120,13 @@ public:
                     PyErr_WriteUnraisable(fn);
                     PyErr_Clear();
                 }
+                Py_DECREF(fn);
 
                 if (PyLong_Check(result)) {
                     long count = PyLong_AsLong(result);
                     ret = count > 1;
                 }
                 Py_XDECREF(result);
-                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
@@ -148,6 +148,7 @@ public:
                     PyErr_WriteUnraisable(fn);
                     PyErr_Clear();
                 }
+                Py_DECREF(fn);
 
                 if (result) {
                     aitIndex bound = PyLong_AsLong(result);
@@ -157,7 +158,6 @@ public:
 
                     Py_DECREF(result);
                 }
-                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
@@ -196,29 +196,22 @@ public:
             }
 
             if (type != aitEnumInvalid) {
-                PyObject* context = create_async_context(ctx);
-                if (context) {
-                    PyObject* fn = PyObject_GetAttrString(pv, "read");
-                    if (fn) {
-                        PyObject* args = Py_BuildValue("(O)", context);
-                        if (args) {
-                            PyObject* result = PyObject_CallObject(fn, args);
-                            if (PyErr_Occurred()) {
-                                PyErr_WriteUnraisable(fn);
-                                PyErr_Clear();
-                            }
-
-                            if (result and result != Py_None) {
-                                if (to_gdd(result, type, prototype)) {
-                                    ret = S_casApp_success;
-                                }
-                                Py_DECREF(result);
-                            }
-                            Py_DECREF(args);
-                        }
-                        Py_DECREF(fn);
+                PyObject* fn = PyObject_GetAttrString(pv, "read");
+                if (fn) {
+                    PyObject* result = PyObject_CallFunction(fn, "(N)",
+                        create_async_context(ctx));
+                    if (PyErr_Occurred()) {
+                        PyErr_WriteUnraisable(fn);
+                        PyErr_Clear();
                     }
-                    Py_DECREF(context);
+                    Py_DECREF(fn);
+
+                    if (result and result != Py_None) {
+                        if (to_gdd(result, type, prototype)) {
+                            ret = S_casApp_success;
+                        }
+                        Py_DECREF(result);
+                    }
                 }
             }
 
@@ -241,33 +234,28 @@ public:
 
         caStatus ret = S_casApp_noSupport;
         PyGILState_STATE gstate = PyGILState_Ensure();
-            PyObject* value_timestamp = from_gdd(value, pv_struct->use_numpy);
-            if (value_timestamp) {
-                PyObject* context = create_async_context(ctx);
-                if (context) {
-                    PyObject* fn = PyObject_GetAttrString(pv, "write");
-                    if (fn) {
-                        PyObject* args = Py_BuildValue("(OOO)", PyTuple_GET_ITEM(value_timestamp, 0), PyTuple_GET_ITEM(value_timestamp, 1), context);
-                        if (args) {
-                            PyObject* result = PyObject_CallObject(fn, args);
-                            if (PyErr_Occurred()) {
-                                PyErr_WriteUnraisable(fn);
-                                PyErr_Clear();
-                            }
-
-                            if (result) {
-                                if (PyObject_IsTrue(result)) {
-                                    ret = S_casApp_success;
-                                }
-                                Py_DECREF(result);
-                            }
-                            Py_DECREF(args);
-                        }
-                        Py_DECREF(fn);
+            PyObject* fn = PyObject_GetAttrString(pv, "write");
+            if (fn) {
+                PyObject* value_timestamp = from_gdd(value, pv_struct->use_numpy);
+                if (value_timestamp) {
+                    PyObject* result = PyObject_CallFunction(fn, "(OON)",
+                        PyTuple_GET_ITEM(value_timestamp, 0),
+                        PyTuple_GET_ITEM(value_timestamp, 1),
+                        create_async_context(ctx));
+                    if (PyErr_Occurred()) {
+                        PyErr_WriteUnraisable(fn);
+                        PyErr_Clear();
                     }
-                    Py_DECREF(context);
+                    Py_DECREF(value_timestamp);
+
+                    if (result) {
+                        if (PyObject_IsTrue(result)) {
+                            ret = S_casApp_success;
+                        }
+                        Py_DECREF(result);
+                    }
                 }
-                Py_DECREF(value_timestamp);
+                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
