@@ -38,10 +38,22 @@ def cacmd(args):
         'EPICS_CA_SERVER_PORT': EPICS_CA_SERVER_PORT,
         'EPICS_CA_REPEATER_PORT': EPICS_CA_REPEATER_PORT
     }
-    return subprocess.check_output(args,
-        stdin=subprocess.DEVNULL,
-        env=environment,
-        universal_newlines=True).strip()
+    with subprocess.Popen(args,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=environment,
+            universal_newlines=True) as process:
+        try:
+            stdout, stderr = process.communicate()
+        except:
+            process.kill()
+            raise
+        retcode = process.poll()
+        if retcode:
+            raise subprocess.CalledProcessError(retcode, process.args,
+                    output=stdout, stderr=stderr)
+    return subprocess.CompletedProcess(process.args, retcode, stdout, stderr)
 
 def caget(pv, as_string=False, array=False):
     args = []
@@ -51,11 +63,16 @@ def caget(pv, as_string=False, array=False):
         result = cacmd(['caget', '-t', '-w', '0.1'] + args + [ pv ])
     except subprocess.CalledProcessError:
         raise CagetError
+
+    if 'CA.Client.Exception' in result.stderr:
+        raise CagetError
+
+    stdout = result.stdout.strip()
     if array:
         # Remove first entry (length of array)
-        return result.split()[1:]
+        return stdout.split()[1:]
     else:
-        return result
+        return stdout
 
 
 def caput(pv, value):
@@ -66,6 +83,10 @@ def caput(pv, value):
     else:
         values = [ str(value) ]
     try:
-        return cacmd(['caput', '-t', '-w', '0.1'] + args + [ pv ] + values)
+        result = cacmd(['caput', '-t', '-w', '0.1'] + args + [ pv ] + values)
     except subprocess.CalledProcessError:
         raise CaputError
+
+    if 'CA.Client.Exception' in result.stderr:
+        raise CaputError
+    return result.stdout.strip()
