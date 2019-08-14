@@ -84,36 +84,95 @@ def default_attributes(type_, count=1, use_numpy=None):
 
 
 def failing_write_handler(pv, value, timestamp, context):
+    """
+    A write handler which disallows writes.
+    """
     return False
 
 
 class AsyncRead(cas.AsyncRead):
     """
     Asyncronous read completion class.
+
+    Create an object of this class in a read handler and return it
+    to signal an asynchronous read operation.
+
+    When the read operation is completed call the :meth:`complete`
+    method. If it fails call the :meth:`fail` method.
     """
     def __init__(self, pv, context):
         super().__init__(context)
         self._pv = pv
 
     def complete(self, attributes):
+        """
+        Complete the asynchronous read operation.
+
+        This updates the PV object and signals the completion to the
+        server.
+
+        This method is thread-safe.
+
+        Args:
+            attributes (dict): An attributes dictionary with the read
+                attributes.
+        """
         pv = self._pv
         with pv._attributes_lock:
             pv._update_attributes(attributes)
             attributes = pv._copy_attributes()
         super().complete(pv._pv._encode(attributes))
 
+    def fail(self):
+        """
+        Fail the asynchronous read operation.
+
+        This signals a failure of the read operation to the server.
+
+        This method is thread-safe.
+        """
+        super().fail()
+
 
 class AsyncWrite(cas.AsyncWrite):
     """
     Asyncronous write completion class.
+
+    Create an object of this class in a write handler and return it
+    to signal an asynchronous write operation.
+
+    When the write operation is completed call the :meth:`complete`
+    method. If it fails call the :meth:`fail` method.
     """
     def __init__(self, pv, context):
         super().__init__(context)
         self._pv = pv
 
     def complete(self, value, timestamp):
+        """
+        Complete the asynchronous write operation.
+
+        This updates the PV object and signals the completion to the
+        server.
+
+        This method is thread-safe.
+
+        Args:
+            value: The new value for the *value* attribute.
+            timestamp (datetime): The new value for the *timestamp* attribute.
+        """
         self._pv._update_value_timestamp(value, timestamp)
         super().complete()
+
+    def fail(self):
+        """
+        Fail the asynchronous write operation.
+
+        This signals a failure of the write operation to the server.
+
+        This method is thread-safe.
+        """
+        super().fail()
 
 
 class PV(object):
@@ -177,6 +236,42 @@ class PV(object):
         A tuple ``(minimum, maximum)``. When any value lies outside of the
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
+
+    A read handler allows to customize the retrievel of attribute values
+    via channel access and perform asynchronous reads.
+    It is called from an unspecified thread and should not block.
+
+        **Signature**: ``read_handler(pv, context)``
+
+        **Parameters**:
+
+            * **pv** (:class:`PV`): The :class:`PV` which attributes are requested.
+            * **context** : A context object needed to create an :class:`AsyncRead` object.
+
+        **Returns**:
+            * ``True`` to allow the read and use the current attributes.
+            * ``False`` to disallow the read.
+            * An attributes dictionary to update the attributes and use them.
+            * An :class:`AsyncRead` object to signal an asynchronous read operation.
+
+    A write handler allows to customize the change of the PV value
+    via channel access and perform asynchronous writes.
+    It is called from an unspecified thread and should not block.
+
+        **Signature**: ``write_handler(pv, value, timestamp, context)``
+
+        **Parameters**:
+
+            * **pv** (:class:`PV`): The :class:`PV` which value is changed.
+            * **value**: The new value for the *value* attribute.
+            * **timestmap**: The new value for the *timestamp* attribute.
+            * **context** : A context object needed to create an :class:`AsyncWrite` object.
+
+        **Returns**:
+            * ``True`` to allow the write and update the attributes
+            * ``False`` to disallow the write.
+            * A tuple ``(value, timestamp)`` to use instead of the arguments.
+            * An :class:`AsyncWrite` object to signal an asynchronous write operation.
     """
     def __init__(self, name, type_, *, count=1, attributes=None,
             value_deadband=0, archive_deadband=0,

@@ -480,7 +480,7 @@ This is called from an unspecified thread.
 Returns:
     int: Number of elements.
 )");
-PyDoc_STRVAR(read__doc__, R"(read()
+PyDoc_STRVAR(read__doc__, R"(read(context)
 
 Retreive the attributes of the PV.
 
@@ -488,10 +488,13 @@ This is called from the server when a get request is processed.
 
 This is called from an unspecified thread.
 
+Args:
+    context: A context object needed to create an :class:`AsyncRead` object.
+
 Returns:
     dict: An attributes dictionary with all PV attributes.
 )");
-PyDoc_STRVAR(write__doc__, R"(write(value, timestamp)
+PyDoc_STRVAR(write__doc__, R"(write(value, timestamp, context)
 
 Set the value of the PV.
 
@@ -502,6 +505,7 @@ This is called from an unspecified thread.
 Args:
     value: The new value. The type depends on the PV type.
     timestamp: An epics timestamp tuple.
+    context: A context object needed to create an :class:`AsyncWrite` object.
 
 Returns:
     bool: ``True`` if the write was successful, ``False`` otherwise.
