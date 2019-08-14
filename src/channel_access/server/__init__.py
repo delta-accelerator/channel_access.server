@@ -180,7 +180,7 @@ class PV(object):
     """
     def __init__(self, name, type_, *, count=1, attributes=None,
             value_deadband=0, archive_deadband=0,
-            read_handler=None, write_handler=None,
+            read_handler=None, write_handler=None, read_only=False,
             encoding='utf-8', monitor=None, use_numpy=None):
         """
         Args:
@@ -200,6 +200,9 @@ class PV(object):
                 for read requests from a client.
             write_handler (callable): A callable used as the write handler
                 for write requests from a client.
+            read_only (bool): If ``True`` the value can't be changed via
+                channel access puts. A custom write handler will overwrite
+                this setting.
             monitor (callable):
                 This is the initial value for the monitor handler.
             encoding (str): The encoding used for the PV name and string
@@ -210,6 +213,8 @@ class PV(object):
         super().__init__()
         if use_numpy is None:
             use_numpy = numpy is not None
+        if read_only and not write_handler:
+            write_handler = failing_write_handler
         self._pv = _PV(name, self, use_numpy=use_numpy, encoding=encoding,
             read_handler=read_handler, write_handler=write_handler)
 
