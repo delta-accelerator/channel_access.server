@@ -17,3 +17,9 @@ Low-level cas binding
 
     .. autoclass:: PV
         :members:
+
+    .. autoclass:: AsyncRead
+        :members:
+
+    .. autoclass:: AsyncWrite
+        :members:

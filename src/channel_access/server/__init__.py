@@ -83,6 +83,98 @@ def default_attributes(type_, count=1, use_numpy=None):
     return result
 
 
+def failing_write_handler(pv, value, timestamp, context):
+    """
+    A write handler which disallows writes.
+    """
+    return False
+
+
+class AsyncRead(cas.AsyncRead):
+    """
+    Asyncronous read completion class.
+
+    Create an object of this class in a read handler and return it
+    to signal an asynchronous read operation.
+
+    When the read operation is completed call the :meth:`complete`
+    method. If it fails call the :meth:`fail` method.
+    """
+    def __init__(self, pv, context):
+        super().__init__(context)
+        self._pv = pv
+
+    def complete(self, attributes):
+        """
+        Complete the asynchronous read operation.
+
+        This updates the PV object and signals the completion to the
+        server.
+
+        This method is thread-safe.
+
+        Args:
+            attributes (dict): An attributes dictionary with the read
+                attributes.
+        """
+        pv = self._pv
+        with pv._attributes_lock:
+            pv._update_attributes(attributes)
+            attributes = pv._copy_attributes()
+        super().complete(pv._pv._encode(attributes))
+
+    def fail(self):
+        """
+        Fail the asynchronous read operation.
+
+        This signals a failure of the read operation to the server.
+
+        This method is thread-safe.
+        """
+        super().fail()
+
+
+class AsyncWrite(cas.AsyncWrite):
+    """
+    Asyncronous write completion class.
+
+    Create an object of this class in a write handler and return it
+    to signal an asynchronous write operation.
+
+    When the write operation is completed call the :meth:`complete`
+    method. If it fails call the :meth:`fail` method.
+    """
+    def __init__(self, pv, context):
+        super().__init__(context)
+        self._pv = pv
+
+    def complete(self, value, timestamp):
+        """
+        Complete the asynchronous write operation.
+
+        This updates the PV object and signals the completion to the
+        server.
+
+        This method is thread-safe.
+
+        Args:
+            value: The new value for the *value* attribute.
+            timestamp (datetime): The new value for the *timestamp* attribute.
+        """
+        self._pv._update_value_timestamp(value, timestamp)
+        super().complete()
+
+    def fail(self):
+        """
+        Fail the asynchronous write operation.
+
+        This signals a failure of the write operation to the server.
+
+        This method is thread-safe.
+        """
+        super().fail()
+
+
 class PV(object):
     """
     A channel access PV.
@@ -144,8 +236,47 @@ class PV(object):
         A tuple ``(minimum, maximum)``. When any value lies outside of the
         range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.
         This is only used for numerical PVs.
+
+    A read handler allows to customize the retrievel of attribute values
+    via channel access and perform asynchronous reads.
+    It is called from an unspecified thread and should not block.
+
+        **Signature**: ``read_handler(pv, context)``
+
+        **Parameters**:
+
+            * **pv** (:class:`PV`): The :class:`PV` which attributes are requested.
+            * **context** : A context object needed to create an :class:`AsyncRead` object.
+
+        **Returns**:
+            * ``True`` to allow the read and use the current attributes.
+            * ``False`` to disallow the read.
+            * An attributes dictionary to update the attributes and use them.
+            * An :class:`AsyncRead` object to signal an asynchronous read operation.
+
+    A write handler allows to customize the change of the PV value
+    via channel access and perform asynchronous writes.
+    It is called from an unspecified thread and should not block.
+
+        **Signature**: ``write_handler(pv, value, timestamp, context)``
+
+        **Parameters**:
+
+            * **pv** (:class:`PV`): The :class:`PV` which value is changed.
+            * **value**: The new value for the *value* attribute.
+            * **timestmap**: The new value for the *timestamp* attribute.
+            * **context** : A context object needed to create an :class:`AsyncWrite` object.
+
+        **Returns**:
+            * ``True`` to allow the write and update the attributes
+            * ``False`` to disallow the write.
+            * A tuple ``(value, timestamp)`` to use instead of the arguments.
+            * An :class:`AsyncWrite` object to signal an asynchronous write operation.
     """
-    def __init__(self, name, type_, *, count=1, attributes=None, value_deadband=0, archive_deadband=0, encoding='utf-8', monitor=None, use_numpy=None):
+    def __init__(self, name, type_, *, count=1, attributes=None,
+            value_deadband=0, archive_deadband=0,
+            read_handler=None, write_handler=None, read_only=False,
+            encoding='utf-8', monitor=None, use_numpy=None):
         """
         Args:
             name (str|bytes): Name of the PV.
@@ -160,6 +291,13 @@ class PV(object):
             archive_deadband (int|float): If any value changes more than this
                 deadband an archive event is fired.
                 This is only used for numerical PVs.
+            read_handler (callable): A callable used as the read handler
+                for read requests from a client.
+            write_handler (callable): A callable used as the write handler
+                for write requests from a client.
+            read_only (bool): If ``True`` the value can't be changed via
+                channel access puts. A custom write handler will overwrite
+                this setting.
             monitor (callable):
                 This is the initial value for the monitor handler.
             encoding (str): The encoding used for the PV name and string
@@ -170,7 +308,10 @@ class PV(object):
         super().__init__()
         if use_numpy is None:
             use_numpy = numpy is not None
-        self._pv = _PV(name, self, use_numpy=use_numpy, encoding=encoding)
+        if read_only and not write_handler:
+            write_handler = failing_write_handler
+        self._pv = _PV(name, self, use_numpy=use_numpy, encoding=encoding,
+            read_handler=read_handler, write_handler=write_handler)
 
         self._name = name
         self._type = type_
@@ -713,12 +854,14 @@ class _PV(cas.PV):
     """
     cas.PV implementation.
     """
-    def __init__(self, name, pv, *, use_numpy, encoding):
+    def __init__(self, name, pv, *, use_numpy, encoding, read_handler, write_handler):
         if encoding is not None:
             name = name.encode(encoding)
         super().__init__(name, use_numpy)
         self._pv = pv
         self._encoding = encoding
+        self._read_handler = read_handler
+        self._write_handler = write_handler
 
     def _encode(self, attributes):
         """ Convert a high-level attributes dictionary to a low-level one. """
@@ -753,12 +896,36 @@ class _PV(cas.PV):
     def type(self):
         return self._pv.type
 
-    def read(self):
-        return self._encode(self._pv.attributes)
+    def read(self, context):
+        attributes = None
+        if self._read_handler:
+            result = self._read_handler(self._pv, context)
+            if isinstance(result, AsyncRead) or not result:
+                return result
+            # Test for the True singleton
+            if result is not True:
+                with self._pv._attributes_lock:
+                    self._pv._update_attributes(result)
+                    attributes = self._pv._copy_attributes()
 
-    def write(self, value, timestamp=None):
+        if not attributes:
+            attributes = self._pv.attributes
+        return self._encode(attributes)
+
+    def write(self, value, timestamp, context):
+        value, timestamp = self._decode(value, timestamp)
+
+        if self._write_handler:
+            result = self._write_handler(self._pv, value, timestamp, context)
+
+            if isinstance(result, AsyncWrite) or not result:
+                return result
+            # Test for the True singleton
+            if result is not True:
+                value, timestamp = result
+
         try:
-            self._pv._update_value_timestamp(*self._decode(value, timestamp))
+            self._pv._update_value_timestamp(value, timestamp)
         except:
             return False
         else:

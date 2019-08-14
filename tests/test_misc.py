@@ -40,7 +40,6 @@ def test_monitor_intern(server):
     pv.value = 1
     assert(received == 1)
 
-
 def test_monitor_extern(server):
     received = None
     def handler(pv, attributes):
@@ -50,3 +49,8 @@ def test_monitor_extern(server):
     pv = server.createPV('CAS:Test', ca.Type.CHAR, monitor=handler)
     common.caput('CAS:Test', 1)
     assert(received == 1)
+
+def test_read_only(server):
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, read_only=True)
+    with pytest.raises(common.CaputError):
+        common.caput('CAS:Test', 1)

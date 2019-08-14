@@ -8,6 +8,7 @@
 
 #include "cas.hpp"
 #include "convert.hpp"
+#include "async.hpp"
 
 namespace cas {
 namespace {
@@ -119,13 +120,13 @@ public:
                     PyErr_WriteUnraisable(fn);
                     PyErr_Clear();
                 }
+                Py_DECREF(fn);
 
                 if (PyLong_Check(result)) {
                     long count = PyLong_AsLong(result);
                     ret = count > 1;
                 }
                 Py_XDECREF(result);
-                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
@@ -147,6 +148,7 @@ public:
                     PyErr_WriteUnraisable(fn);
                     PyErr_Clear();
                 }
+                Py_DECREF(fn);
 
                 if (result) {
                     aitIndex bound = PyLong_AsLong(result);
@@ -156,7 +158,6 @@ public:
 
                     Py_DECREF(result);
                 }
-                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
@@ -197,7 +198,8 @@ public:
             if (type != aitEnumInvalid) {
                 PyObject* fn = PyObject_GetAttrString(pv, "read");
                 if (fn) {
-                    PyObject* result = PyObject_CallFunction(fn, nullptr);
+                    PyObject* result = PyObject_CallFunction(fn, "(N)",
+                        create_async_context(ctx, &prototype, type));
                     if (PyErr_Occurred()) {
                         PyErr_WriteUnraisable(fn);
                         PyErr_Clear();
@@ -205,7 +207,9 @@ public:
                     Py_DECREF(fn);
 
                     if (result and result != Py_None) {
-                        if (to_gdd(result, type, prototype)) {
+                        if (give_async_read_to_server(result)) {
+                            ret = S_casApp_asyncCompletion;
+                        } else if (to_gdd(result, type, prototype)) {
                             ret = S_casApp_success;
                         }
                         Py_DECREF(result);
@@ -232,26 +236,30 @@ public:
 
         caStatus ret = S_casApp_noSupport;
         PyGILState_STATE gstate = PyGILState_Ensure();
-            PyObject* args = from_gdd(value, pv_struct->use_numpy);
-            if (args) {
-                PyObject* fn = PyObject_GetAttrString(pv, "write");
-                if (fn) {
-                    PyObject* result = PyObject_CallObject(fn, args);
+            PyObject* fn = PyObject_GetAttrString(pv, "write");
+            if (fn) {
+                PyObject* value_timestamp = from_gdd(value, pv_struct->use_numpy);
+                if (value_timestamp) {
+                    PyObject* result = PyObject_CallFunction(fn, "(OON)",
+                        PyTuple_GET_ITEM(value_timestamp, 0),
+                        PyTuple_GET_ITEM(value_timestamp, 1),
+                        create_async_context(ctx, nullptr, aitEnumInvalid));
                     if (PyErr_Occurred()) {
                         PyErr_WriteUnraisable(fn);
                         PyErr_Clear();
                     }
-                    Py_DECREF(fn);
+                    Py_DECREF(value_timestamp);
 
                     if (result) {
-                        if (PyObject_IsTrue(result)) {
+                        if (give_async_write_to_server(result)) {
+                            ret = S_casApp_asyncCompletion;
+                        } else if (PyObject_IsTrue(result)) {
                             ret = S_casApp_success;
                         }
                         Py_DECREF(result);
                     }
                 }
-
-                Py_DECREF(args);
+                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
@@ -472,7 +480,7 @@ This is called from an unspecified thread.
 Returns:
     int: Number of elements.
 )");
-PyDoc_STRVAR(read__doc__, R"(read()
+PyDoc_STRVAR(read__doc__, R"(read(context)
 
 Retreive the attributes of the PV.
 
@@ -480,10 +488,13 @@ This is called from the server when a get request is processed.
 
 This is called from an unspecified thread.
 
+Args:
+    context: A context object needed to create an :class:`AsyncRead` object.
+
 Returns:
     dict: An attributes dictionary with all PV attributes.
 )");
-PyDoc_STRVAR(write__doc__, R"(write(value, timestamp)
+PyDoc_STRVAR(write__doc__, R"(write(value, timestamp, context)
 
 Set the value of the PV.
 
@@ -494,6 +505,7 @@ This is called from an unspecified thread.
 Args:
     value: The new value. The type depends on the PV type.
     timestamp: An epics timestamp tuple.
+    context: A context object needed to create an :class:`AsyncWrite` object.
 
 Returns:
     bool: ``True`` if the write was successful, ``False`` otherwise.

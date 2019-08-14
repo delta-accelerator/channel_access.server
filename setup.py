@@ -29,7 +29,8 @@ cas_extension = Extension('channel_access.server.cas',
         'cas.cpp',
         'server.cpp',
         'pv.cpp',
-        'convert.cpp'
+        'convert.cpp',
+        'async.cpp'
     ])),
     include_dirs = [
         cas_path,
