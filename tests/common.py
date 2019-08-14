@@ -55,12 +55,15 @@ def cacmd(args):
                     output=stdout, stderr=stderr)
     return subprocess.CompletedProcess(process.args, retcode, stdout, stderr)
 
-def caget(pv, as_string=False, array=False):
+def caget(pv, as_string=False, array=False, timeout=None):
+    if timeout is None:
+        timeout = 0.1
+
     args = []
     if not as_string:
         args.append('-n')
     try:
-        result = cacmd(['caget', '-t', '-w', '0.1'] + args + [ pv ])
+        result = cacmd(['caget', '-t', '-w', str(timeout)] + args + [ pv ])
     except subprocess.CalledProcessError:
         raise CagetError
 
