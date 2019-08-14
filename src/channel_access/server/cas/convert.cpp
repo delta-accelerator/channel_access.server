@@ -19,6 +19,23 @@
 namespace cas {
 namespace {
 
+PyObject* dict_get_item(PyObject* dict, char const* item)
+{
+    PyObject* key = PyUnicode_FromString(item);
+    if (not key) return nullptr;
+
+    PyObject* value = PyDict_GetItemWithError(dict, key);
+    Py_DECREF(key);
+    if (not value) {
+        if (not PyErr_Occurred()) {
+            // Key not found
+            PyErr_Format(PyExc_KeyError, "'%s' not in dictionary", item);
+        }
+        return nullptr;
+    }
+    return value;
+}
+
 #if CA_SERVER_NUMPY_SUPPORT
 
 // GDD            Description                 Numpy
@@ -357,16 +374,16 @@ bool read_limits(PyObject* value, aitEnum type, gdd& lower, gdd& upper)
 
 bool read_simple(PyObject* dict, aitEnum type, gdd& result)
 {
-    PyObject* value = PyDict_GetItemString(dict, "value");
+    PyObject* value = dict_get_item(dict, "value");
     if (not read_value(value, type, result)) return false;
 
-    PyObject* status = PyDict_GetItemString(dict, "status");
+    PyObject* status = dict_get_item(dict, "status");
     if (not read_status(status, result)) return false;
 
-    PyObject* severity = PyDict_GetItemString(dict, "severity");
+    PyObject* severity = dict_get_item(dict, "severity");
     if (not read_severity(severity, result)) return false;
 
-    PyObject* timestamp = PyDict_GetItemString(dict, "timestamp");
+    PyObject* timestamp = dict_get_item(dict, "timestamp");
     if (not read_timestamp(timestamp, result)) return false;
 
     return true;
@@ -374,7 +391,7 @@ bool read_simple(PyObject* dict, aitEnum type, gdd& result)
 
 bool read_enums(PyObject* dict, gdd& result)
 {
-    PyObject* enum_strings = PyDict_GetItemString(dict, "enum_strings");
+    PyObject* enum_strings = dict_get_item(dict, "enum_strings");
     if (not enum_strings) return false;
 
     Py_ssize_t size = PyTuple_Size(enum_strings);
@@ -407,22 +424,22 @@ bool read_gr(PyObject* dict, aitEnum type, gdd& result)
     if (type == aitEnumFloat32 or type == aitEnumFloat64) {
         if (not read_simple(dict, type, result[gddAppTypeIndex_dbr_gr_double_value])) return false;
 
-        PyObject* precision = PyDict_GetItemString(dict, "precision");
+        PyObject* precision = dict_get_item(dict, "precision");
         if (not read_value(precision, aitEnumInt16, result[gddAppTypeIndex_dbr_gr_double_precision])) return false;
     } else {
         if (not read_simple(dict, type, result[gddAppTypeIndex_dbr_gr_long_value])) return false;
     }
 
-    PyObject* unit = PyDict_GetItemString(dict, "unit");
+    PyObject* unit = dict_get_item(dict, "unit");
     if (not read_string(unit, result[gddAppTypeIndex_dbr_gr_double_units])) return false;
 
-    PyObject* display_limits = PyDict_GetItemString(dict, "display_limits");
+    PyObject* display_limits = dict_get_item(dict, "display_limits");
     if (not read_limits(display_limits, type, result[gddAppTypeIndex_dbr_gr_double_graphicLow], result[gddAppTypeIndex_dbr_gr_double_graphicHigh])) return false;
 
-    PyObject* warning_limits = PyDict_GetItemString(dict, "warning_limits");
+    PyObject* warning_limits = dict_get_item(dict, "warning_limits");
     if (not read_limits(warning_limits, type, result[gddAppTypeIndex_dbr_gr_double_alarmLowWarning], result[gddAppTypeIndex_dbr_gr_double_alarmHighWarning])) return false;
 
-    PyObject* alarm_limits = PyDict_GetItemString(dict, "alarm_limits");
+    PyObject* alarm_limits = dict_get_item(dict, "alarm_limits");
     if (not read_limits(alarm_limits, type, result[gddAppTypeIndex_dbr_gr_double_alarmLow], result[gddAppTypeIndex_dbr_gr_double_alarmHigh])) return false;
 
     return true;
@@ -433,25 +450,25 @@ bool read_ctrl(PyObject* dict, aitEnum type, gdd& result)
     if (type == aitEnumFloat32 or type == aitEnumFloat64) {
         if (not read_simple(dict, type, result[gddAppTypeIndex_dbr_ctrl_double_value])) return false;
 
-        PyObject* precision = PyDict_GetItemString(dict, "precision");
+        PyObject* precision = dict_get_item(dict, "precision");
         if (not read_value(precision, aitEnumInt16, result[gddAppTypeIndex_dbr_ctrl_double_precision])) return false;
     } else {
         if (not read_simple(dict, type, result[gddAppTypeIndex_dbr_ctrl_long_value])) return false;
     }
 
-    PyObject* unit = PyDict_GetItemString(dict, "unit");
+    PyObject* unit = dict_get_item(dict, "unit");
     if (not read_string(unit, result[gddAppTypeIndex_dbr_ctrl_double_units])) return false;
 
-    PyObject* display_limits = PyDict_GetItemString(dict, "display_limits");
+    PyObject* display_limits = dict_get_item(dict, "display_limits");
     if (not read_limits(display_limits, type, result[gddAppTypeIndex_dbr_ctrl_double_graphicLow], result[gddAppTypeIndex_dbr_ctrl_double_graphicHigh])) return false;
 
-    PyObject* warning_limits = PyDict_GetItemString(dict, "warning_limits");
+    PyObject* warning_limits = dict_get_item(dict, "warning_limits");
     if (not read_limits(warning_limits, type, result[gddAppTypeIndex_dbr_ctrl_double_alarmLowWarning], result[gddAppTypeIndex_dbr_ctrl_double_alarmHighWarning])) return false;
 
-    PyObject* alarm_limits = PyDict_GetItemString(dict, "alarm_limits");
+    PyObject* alarm_limits = dict_get_item(dict, "alarm_limits");
     if (not read_limits(alarm_limits, type, result[gddAppTypeIndex_dbr_ctrl_double_alarmLow], result[gddAppTypeIndex_dbr_ctrl_double_alarmHigh])) return false;
 
-    PyObject* control_limits = PyDict_GetItemString(dict, "control_limits");
+    PyObject* control_limits = dict_get_item(dict, "control_limits");
     if (not read_limits(control_limits, type, result[gddAppTypeIndex_dbr_ctrl_double_controlLow], result[gddAppTypeIndex_dbr_ctrl_double_controlHigh])) return false;
 
     return true;
