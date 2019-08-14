@@ -93,3 +93,106 @@ def test_failing_async_write_handler(server):
     assert(executed)
     timer.join()
     assert(pv.value == 0)
+
+
+def test_read_handler(server):
+    executed = False
+    def handler(pv, context):
+        nonlocal executed
+        executed = True
+        return pv.attributes
+
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, read_handler=handler, attributes={
+        'value': 1
+    })
+    value = int(common.caget('CAS:Test'))
+    assert(executed)
+    assert(value == 1)
+
+def test_noop_read_handler(server):
+    executed = False
+    def handler(pv, context):
+        nonlocal executed
+        executed = True
+        return True
+
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, read_handler=handler, attributes={
+        'value': 1
+    })
+    value = int(common.caget('CAS:Test'))
+    assert(executed)
+    assert(value == 1)
+
+def test_changing_read_handler(server):
+    executed = False
+    def handler(pv, context):
+        nonlocal executed
+        executed = True
+        attr = pv.attributes
+        attr.update({ 'value': 2 })
+        return attr
+
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, read_handler=handler, attributes={
+        'value': 1
+    })
+    value = int(common.caget('CAS:Test'))
+    assert(executed)
+    assert(value == 2)
+
+def test_failing_read_handler(server):
+    executed = False
+    def handler(pv, context):
+        nonlocal executed
+        executed = True
+        return False
+
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, read_handler=handler, attributes={
+        'value': 1
+    })
+    with pytest.raises(common.CagetError):
+        common.caget('CAS:Test')
+    assert(executed)
+
+def test_async_read_handler(server):
+    executed = False
+    completion = None
+
+    def handler(pv, context):
+        nonlocal executed, completion
+        executed = True
+        completion = cas.AsyncRead(pv, context)
+        return completion
+
+    def complete():
+        nonlocal completion
+        completion.complete({'value': 1})
+
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, read_handler=handler)
+    timer = threading.Timer(1.0, complete)
+    timer.start()
+    common.caget('CAS:Test', timeout=2)
+    assert(executed)
+    timer.join()
+    assert(pv.value == 1)
+
+def test_failing_async_read_handler(server):
+    executed = False
+    completion = None
+
+    def handler(pv, context):
+        nonlocal executed, completion
+        executed = True
+        completion = cas.AsyncRead(pv, context)
+        return completion
+
+    def complete():
+        nonlocal completion
+        completion.fail()
+
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, read_handler=handler)
+    timer = threading.Timer(1.0, complete)
+    timer.start()
+    with pytest.raises(common.CagetError):
+        common.caget('CAS:Test', timeout=2)
+    assert(executed)
+    timer.join()
