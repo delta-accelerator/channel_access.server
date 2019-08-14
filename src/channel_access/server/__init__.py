@@ -87,6 +87,22 @@ def failing_write_handler(pv, value, timestamp, context):
     return False
 
 
+class AsyncRead(cas.AsyncRead):
+    """
+    Asyncronous read completion class.
+    """
+    def __init__(self, pv, context):
+        super().__init__(context)
+        self._pv = pv
+
+    def complete(self, attributes):
+        pv = self._pv
+        with pv._attributes_lock:
+            pv._update_attributes(attributes)
+            attributes = pv._copy_attributes()
+        super().complete(pv._pv._encode(attributes))
+
+
 class AsyncWrite(cas.AsyncWrite):
     """
     Asyncronous write completion class.
@@ -164,7 +180,7 @@ class PV(object):
     """
     def __init__(self, name, type_, *, count=1, attributes=None,
             value_deadband=0, archive_deadband=0,
-            write_handler=None,
+            read_handler=None, write_handler=None,
             encoding='utf-8', monitor=None, use_numpy=None):
         """
         Args:
@@ -180,6 +196,8 @@ class PV(object):
             archive_deadband (int|float): If any value changes more than this
                 deadband an archive event is fired.
                 This is only used for numerical PVs.
+            read_handler (callable): A callable used as the read handler
+                for read requests from a client.
             write_handler (callable): A callable used as the write handler
                 for write requests from a client.
             monitor (callable):
@@ -193,7 +211,7 @@ class PV(object):
         if use_numpy is None:
             use_numpy = numpy is not None
         self._pv = _PV(name, self, use_numpy=use_numpy, encoding=encoding,
-            write_handler=write_handler)
+            read_handler=read_handler, write_handler=write_handler)
 
         self._name = name
         self._type = type_
@@ -736,12 +754,13 @@ class _PV(cas.PV):
     """
     cas.PV implementation.
     """
-    def __init__(self, name, pv, *, use_numpy, encoding, write_handler):
+    def __init__(self, name, pv, *, use_numpy, encoding, read_handler, write_handler):
         if encoding is not None:
             name = name.encode(encoding)
         super().__init__(name, use_numpy)
         self._pv = pv
         self._encoding = encoding
+        self._read_handler = read_handler
         self._write_handler = write_handler
 
     def _encode(self, attributes):
@@ -778,7 +797,20 @@ class _PV(cas.PV):
         return self._pv.type
 
     def read(self, context):
-        return self._encode(self._pv.attributes)
+        attributes = None
+        if self._read_handler:
+            result = self._read_handler(self._pv, context)
+            if isinstance(result, AsyncRead) or not result:
+                return result
+            # Test for the True singleton
+            if result is not True:
+                with self._pv._attributes_lock:
+                    self._pv._update_attributes(result)
+                    attributes = self._pv._copy_attributes()
+
+        if not attributes:
+            attributes = self._pv.attributes
+        return self._encode(attributes)
 
     def write(self, value, timestamp, context):
         value, timestamp = self._decode(value, timestamp)

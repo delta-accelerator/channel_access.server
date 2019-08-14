@@ -16,6 +16,16 @@ PyObject* create_async_context_type();
 void destroy_async_context_type();
 
 
+/** Create the AsyncRead type.
+ * Returns new reference.
+ */
+PyObject* create_async_read_type();
+
+/** Destroy the AsyncRead type.
+ */
+void destroy_async_read_type();
+
+
 /** Create the AsyncWrite type.
  * Returns new reference.
  */
@@ -29,7 +39,14 @@ void destroy_async_write_type();
 /** Create an asnyc context object.
  * Returns new reference.
  */
-PyObject* create_async_context(casCtx const& ctx);
+PyObject* create_async_context(casCtx const& ctx, gdd* prototype, aitEnum type);
+
+/** Try to give an async read handler object to the server.
+ *
+ * Returns:
+ *  ``True`` if the object is an async read object and is given to the server.
+ */
+bool give_async_read_to_server(PyObject* obj);
 
 /** Try to give an async write handler object to the server.
  *

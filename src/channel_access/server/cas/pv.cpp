@@ -199,7 +199,7 @@ public:
                 PyObject* fn = PyObject_GetAttrString(pv, "read");
                 if (fn) {
                     PyObject* result = PyObject_CallFunction(fn, "(N)",
-                        create_async_context(ctx));
+                        create_async_context(ctx, &prototype, type));
                     if (PyErr_Occurred()) {
                         PyErr_WriteUnraisable(fn);
                         PyErr_Clear();
@@ -207,7 +207,9 @@ public:
                     Py_DECREF(fn);
 
                     if (result and result != Py_None) {
-                        if (to_gdd(result, type, prototype)) {
+                        if (give_async_read_to_server(result)) {
+                            ret = S_casApp_asyncCompletion;
+                        } else if (to_gdd(result, type, prototype)) {
                             ret = S_casApp_success;
                         }
                         Py_DECREF(result);
@@ -241,7 +243,7 @@ public:
                     PyObject* result = PyObject_CallFunction(fn, "(OON)",
                         PyTuple_GET_ITEM(value_timestamp, 0),
                         PyTuple_GET_ITEM(value_timestamp, 1),
-                        create_async_context(ctx));
+                        create_async_context(ctx, nullptr, aitEnumInvalid));
                     if (PyErr_Occurred()) {
                         PyErr_WriteUnraisable(fn);
                         PyErr_Clear();

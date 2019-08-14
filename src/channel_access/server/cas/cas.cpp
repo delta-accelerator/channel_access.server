@@ -123,8 +123,8 @@ PyMODINIT_FUNC PyInit_cas(void)
 
     int result = -1;
     PyObject* module = nullptr, *server_type = nullptr, *pv_type = nullptr;
-    PyObject* async_context_type = nullptr, *async_write_type = nullptr;
-    PyObject* ca_module = nullptr;
+    PyObject* async_read_type = nullptr, *async_write_type = nullptr;
+    PyObject* async_context_type = nullptr, * ca_module = nullptr;
     PyObject* enum_module = nullptr, *enum_class = nullptr;
 
     module = PyModule_Create(&cas::module);
@@ -189,6 +189,16 @@ PyMODINIT_FUNC PyInit_cas(void)
     async_context_type = cas::create_async_context_type();
     if (not async_context_type) goto error;
 
+    async_read_type = cas::create_async_read_type();
+    if (not async_read_type) goto error;
+
+    result = PyModule_AddObject(module, "AsyncRead", async_read_type);
+    async_read_type = nullptr;
+    if (result != 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Could not add AsyncRead class");
+        goto error;
+    }
+
     async_write_type = cas::create_async_write_type();
     if (not async_write_type) goto error;
 
@@ -208,6 +218,7 @@ error:
     Py_XDECREF(pv_type);
     Py_XDECREF(server_type);
     Py_XDECREF(async_context_type);
+    Py_XDECREF(async_read_type);
     Py_XDECREF(async_write_type);
     Py_XDECREF(cas::enum_attach);
     Py_XDECREF(cas::enum_exists);
