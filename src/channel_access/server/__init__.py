@@ -46,7 +46,7 @@ def default_attributes(type_, count=1, use_numpy=None):
     Args:
         type (:class:`channel_access.common.Type`): Type of the PV.
         count (int): Number of elements of the PV.
-    use_numpy (bool): If ``True`` use numpy arrays.
+        use_numpy (bool): If ``True`` use numpy arrays.
 
     Returns:
         dict: Attributes dictionary.
@@ -1001,7 +1001,7 @@ class Server(object):
         This property is thread-safe.
 
         Returns:
-          list(PV): List of active PV objects.
+          list(:class:`PV`): List of active PV objects.
         """
         with self._pvs_lock:
             return list(self._pvs.values())
@@ -1063,7 +1063,7 @@ class Server(object):
         """
         Return the active PV object for ``name``.
 
-        Raises a :class:``KeyError`` if no PV object can be found.
+        Raises a :class:`KeyError` if no PV object can be found.
 
         This method is thread-safe.
 
@@ -1088,7 +1088,7 @@ class Server(object):
         """
         Add an alternative name for a PV.
 
-        PVs created with ``createPV`` are searched first. If none is found
+        PVs created with :meth:`createPV` are searched first. If none is found
         the alias list ist checked. If an alias exists a second search
         using the original name is made and if a PV exists it is used.
 
@@ -1098,7 +1098,7 @@ class Server(object):
             alias (str): The alternative name.
             name (str): The original name.
             encoding (str): The encoding used for the names.
-                            See ``encoding`` parameter of ``PV`` objects.
+                            See *encoding* parameter of :class:`PV` objects.
         """
         if encoding is _sentinal:
             if self._encoding is None:
