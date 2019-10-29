@@ -16,6 +16,7 @@ FLOAT_TYPES = [
     ca.Type.FLOAT,
     ca.Type.DOUBLE
 ]
+ARRAY_TYPES = INT_TYPES + FLOAT_TYPES + [ ca.Type.ENUM ]
 
 
 EPICS_CA_ADDR = '127.0.0.1'

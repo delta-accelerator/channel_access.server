@@ -423,6 +423,8 @@ class PV(object):
         # we can't compare them.
         if is_sequence(value) != is_sequence(old_value):
             value_changed = True
+        elif is_sequence(value) and len(value) != len(old_value):
+            value_changed = True
         else:
             if self._type in (ca.Type.FLOAT, ca.Type.DOUBLE):
                 isclose = lambda a, b: _isclose(a, b, rel_tol=self._relative_tolerance, abs_tol=self._absolute_tolerance)
@@ -443,7 +445,11 @@ class PV(object):
             self._attributes['value'] = value
             # If old and new_value differ in wether they are sequences or not
             # we can't use the deadbands.
-            if self._type not in (ca.Type.STRING, ca.Type.ENUM) and is_sequence(value) == is_sequence(old_value):
+            number_type = self._type not in (ca.Type.STRING, ca.Type.ENUM)
+            difference_sequence = is_sequence(value) != is_sequence(old_value)
+            different_len = is_sequence(value) and is_sequence(old_value) and len(value) != len(old_value)
+
+            if number_type and not difference_sequence and not different_len:
                 if is_sequence(value):
                     # Look at the maximum difference between the old values
                     # and the new ones.
