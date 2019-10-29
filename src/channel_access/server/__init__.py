@@ -39,13 +39,13 @@ def is_sequence(value):
     return not isinstance(value, str) and hasattr(type(value), '__iter__')
 
 
-def default_attributes(type_, count=1, use_numpy=None):
+def default_attributes(type_, count=None, use_numpy=None):
     """
     Return the default attributes dictionary for new PVs.
 
     Args:
         type (:class:`channel_access.common.Type`): Type of the PV.
-        count (int): Number of elements of the PV.
+        count (int): Number of elements of the array PV or ``None`` if scalar.
         use_numpy (bool): If ``True`` use numpy arrays.
 
     Returns:
@@ -63,7 +63,7 @@ def default_attributes(type_, count=1, use_numpy=None):
     if type_ == ca.Type.STRING:
         result['value'] = ''
     else:
-        if count == 1:
+        if count is None:
             result['value'] = 0
         else:
             if numpy and use_numpy:
@@ -203,7 +203,8 @@ class PV(object):
 
     enum_strings
         Tuple with the strings corresponding to the enumeration values.
-        The length of the tuple must be equal to :data:`PV.count`.
+        The length of the tuple must be equal to the maximum allowed
+        value + 1.
         The entries are ``bytes`` or ``str`` depending on the
         ``encondig`` parameter.
         This is only used for enum PVs.
@@ -273,7 +274,7 @@ class PV(object):
             * A tuple ``(value, timestamp)`` to use instead of the arguments.
             * An :class:`AsyncWrite` object to signal an asynchronous write operation.
     """
-    def __init__(self, name, type_, *, count=1, attributes=None,
+    def __init__(self, name, type_, *, count=None, attributes=None,
             value_deadband=0, archive_deadband=0,
             read_handler=None, write_handler=None, read_only=False,
             encoding='utf-8', monitor=None, use_numpy=None):
@@ -282,7 +283,7 @@ class PV(object):
             name (str|bytes): Name of the PV.
                 If ``encoding`` is ``None`` this must be raw bytes.
             type (:class:`channel_access.common.Type`): The PV type.
-            count (int): The initial array length. A length of 1 is a scalar PV.
+            count (int): The initial array length. Use ``None`` for a scalar PV.
             attributes (dict): Attributes dictionary with the initial attributes.
                 These will override the default attributes.
             value_deadband (int|float): If any value changes more than this
@@ -580,14 +581,14 @@ class PV(object):
     @property
     def count(self):
         """
-        int: The number of elements of this PV.
+        int: The number of array elements of this PV or ``None`` for a scalar.
         """
         with self._attributes_lock:
             value = self._attributes.get('value')
         if is_sequence(value):
             return len(value)
         else:
-            return 1
+            return None
 
     @property
     def type(self):
@@ -769,7 +770,7 @@ class PV(object):
         The type depends on the ``encoding`` parameter.
 
         This is writeable and updates the enumeration strings. The length
-        of the tuple must be equal to the ``count`` parameter.
+        of the tuple must be equal to the maximum value + 1.
         """
         with self._attributes_lock:
             return self._attributes.get('enum_strings')

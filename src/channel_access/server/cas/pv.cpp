@@ -123,8 +123,7 @@ public:
                 Py_DECREF(fn);
 
                 if (PyLong_Check(result)) {
-                    long count = PyLong_AsLong(result);
-                    ret = count > 1;
+                    ret = 1;
                 }
                 Py_XDECREF(result);
             }
@@ -170,7 +169,7 @@ public:
 
     static PyObject* count(PyObject* self, PyObject*)
     {
-        return PyLong_FromLong(1);
+        Py_RETURN_NONE;
     }
 
     virtual caStatus read(casCtx const& ctx, gdd& prototype) override
@@ -472,13 +471,14 @@ PyDoc_STRVAR(count__doc__, R"(count()
 
 Return the number of elements.
 
-This is called from the server when the number of elements is needed.
-Return a value of 1 for a scalar PV.
+This is called from the server when the number of elements is needed for
+an array pv.
+Return ``None`` for a scalar PV.
 
 This is called from an unspecified thread.
 
 Returns:
-    int: Number of elements.
+    int: Number of elements for an array or ``None`` for a scalar.
 )");
 PyDoc_STRVAR(read__doc__, R"(read(context)
 

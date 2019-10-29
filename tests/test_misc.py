@@ -21,7 +21,7 @@ def test_dynamic_size(server):
         'value': 42
     })
     assert(not pv.is_array)
-    assert(pv.count == 1)
+    assert(pv.count is None)
     value = int(common.caget('CAS:Test'))
 
     pv.value = [1, 2, 3]
