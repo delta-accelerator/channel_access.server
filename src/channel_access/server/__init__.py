@@ -420,16 +420,21 @@ class PV(object):
         status, severity = self._calculate_status_severity(value)
 
         old_value = self._attributes.get('value')
-        # If old and new_value differ in wether they are sequences or not
-        # we can't compare them.
         if is_sequence(value) != is_sequence(old_value):
+            # If old and new_value differ in wether they are sequences or not
+            # we can't compare them.
             value_changed = True
         elif is_sequence(value) and len(value) != len(old_value):
+            # If the lenth of both sequences are different we can't
+            # compare them either.
             value_changed = True
         else:
             if self._type in (ca.Type.FLOAT, ca.Type.DOUBLE):
+                # Floating point types can't be compare with the equal
+                # operator because of rounding errors
                 isclose = lambda a, b: _isclose(a, b, rel_tol=self._relative_tolerance, abs_tol=self._absolute_tolerance)
                 if is_sequence(value):
+                    # sequences are compared element-wise
                     if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
                         value_changed = not numpy.allclose(value, old_value, rtol=self._relative_tolerance, atol=self._absolute_tolerance)
                     else:
@@ -437,20 +442,28 @@ class PV(object):
                 else:
                     value_changed = not isclose(value, old_value)
             else:
+                # Integer types are compared with the equal operator
                 if numpy and (isinstance(value, numpy.ndarray) or isinstance(old_value, numpy.ndarray)):
                     value_changed = not numpy.all(numpy.equal(value, old_value))
                 else:
+                    # For simple sequences this compares element-wise
                     value_changed = value != old_value
 
         if value_changed:
             self._attributes['value'] = value
-            # If old and new_value differ in wether they are sequences or not
-            # we can't use the deadbands.
-            number_type = self._type not in (ca.Type.STRING, ca.Type.ENUM)
-            difference_sequence = is_sequence(value) != is_sequence(old_value)
-            different_len = is_sequence(value) and is_sequence(old_value) and len(value) != len(old_value)
 
-            if number_type and not difference_sequence and not different_len:
+            # Deadbands are only defined for number types
+            check_deadbands = self._type not in (ca.Type.STRING, ca.Type.ENUM)
+            if is_sequence(value) != is_sequence(old_value):
+                # If the values differ in wether they are sequences or not,
+                # deadbands can't be used.
+                check_deadbands = False
+            elif is_sequence(value) and len(value) != len(old_value):
+                # If the lenth of both sequences are different we can't
+                # use the deadbands either.
+                check_deadbands = False
+
+            if check_deadbands:
                 if is_sequence(value):
                     # Look at the maximum difference between the old values
                     # and the new ones.
@@ -463,6 +476,7 @@ class PV(object):
                     self._outstanding_events |= ca.Events.ARCHIVE
             else:
                 self._outstanding_events |= ca.Events.VALUE | ca.Events.ARCHIVE
+
         self._update_status_severity(status, severity)
 
     # only call with attributes lock held
