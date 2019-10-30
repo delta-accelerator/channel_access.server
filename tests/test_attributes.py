@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime
+import datetime
 
 import channel_access.common as ca
 import channel_access.server as cas
@@ -7,9 +7,10 @@ from . import common
 
 
 def test_attribute_timestamp(server):
-    pv = server.createPV('CAS:Test', ca.Type.CHAR)
-    dt = datetime(2019, 5, 21, 15, 43, 44)
-    pv._update_value_timestamp(42, dt)
+    dt = datetime.datetime(2019, 5, 21, 15, 43, 44, tzinfo=datetime.timezone.utc)
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, attributes={
+        'timestamp': dt
+    })
     assert(pv.timestamp == dt)
 
 def test_attribute_value(server):
@@ -72,7 +73,9 @@ def test_attribute_status_severity(server):
     assert(pv.status_severity == (ca.Status.SOFT, ca.Severity.MAJOR))
 
 def test_attribute_value_timestamp(server):
-    pv = server.createPV('CAS:Test', ca.Type.CHAR)
-    dt = datetime(2019, 5, 21, 15, 43, 44)
-    pv._update_value_timestamp(42, dt)
+    dt = datetime.datetime(2019, 5, 21, 15, 43, 44, tzinfo=datetime.timezone.utc)
+    pv = server.createPV('CAS:Test', ca.Type.CHAR, attributes={
+        'timestamp': dt,
+        'value': 42
+    })
     assert(pv.value_timestamp == (42, dt))
