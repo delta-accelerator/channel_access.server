@@ -34,9 +34,10 @@ def is_sequence(value):
     """
     Return ``True`` if ``value`` is a sequence type.
 
-    Sequences are types which can be iterated over but are not strings.
+    Sequences are types which can be iterated over but are not strings
+    or bytes.
     """
-    return not isinstance(value, str) and hasattr(type(value), '__iter__')
+    return not isinstance(value, str) and not isinstance(value, bytes) and hasattr(type(value), '__iter__')
 
 
 def default_attributes(type_, count=None, use_numpy=None):
