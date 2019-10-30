@@ -1,6 +1,6 @@
 import threading
 import weakref
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import channel_access.common as ca
 from . import cas
@@ -58,7 +58,7 @@ def default_attributes(type_, count=None, use_numpy=None):
     result = {
         'status': ca.Status.UDF,
         'severity': ca.Severity.INVALID,
-        'timestamp': datetime.utcnow()
+        'timestamp': datetime.now(timezone.utc)
     }
 
     if type_ == ca.Type.STRING:
@@ -675,7 +675,7 @@ class PV(object):
 
     @value.setter
     def value(self, value):
-        self._update_value_timestamp(value, datetime.utcnow())
+        self._update_value_timestamp(value, datetime.now(timezone.utc))
 
     @property
     def value_timestamp(self):
