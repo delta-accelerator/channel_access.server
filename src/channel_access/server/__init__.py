@@ -571,8 +571,6 @@ class PV(object):
     def use_numpy(self):
         """
         bool: Wether this PV uses numpy arrays for its value.
-
-        This property is writeable.
         """
         return self._pv.use_numpy
 
