@@ -149,7 +149,7 @@ class AsyncWrite(cas.AsyncWrite):
         super().__init__(context)
         self._pv = pv
 
-    def complete(self, value, timestamp):
+    def complete(self, value, timestamp=None):
         """
         Complete the asynchronous write operation.
 
@@ -162,6 +162,8 @@ class AsyncWrite(cas.AsyncWrite):
             value: The new value for the *value* attribute.
             timestamp (datetime): The new value for the *timestamp* attribute.
         """
+        if timestamp is None:
+            timestamp = datetime.now(timezone.utc)
         self._pv._update_value_timestamp(value, timestamp)
         super().complete()
 
