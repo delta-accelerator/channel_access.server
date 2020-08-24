@@ -4,6 +4,10 @@ Channel Access server library
 This library contains a low-level binding to the cas library in EPICS base
 and a thread-safe high level interface to create channel access servers.
 
+For the client implementation see `channel_access.client`_.
+
+.. _channel_access.client: https://pypi.org/project/channel_access.client
+
 Installation
 ------------
 Before installing the library, the environment variables ``EPICS_BASE``
@@ -46,7 +50,7 @@ The documentation is available `online`_ or it can be
 generated from the source code with *sphinx*::
 
     cd /path/to/repository
-    pip install -e .
+    pip install -e .[doc]
     python setup.py build_sphinx
 
 Then open ``build/sphinx/html/index.html``.
@@ -66,6 +70,7 @@ Tests
 Tests are run with *pytest*::
 
     cd /path/to/repository
+    pip install -e .[dev]
     pytest -v
 
 To run the tests for all supported version use *tox*::

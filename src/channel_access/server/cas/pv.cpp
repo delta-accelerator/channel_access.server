@@ -8,6 +8,7 @@
 
 #include "cas.hpp"
 #include "convert.hpp"
+#include "async.hpp"
 
 namespace cas {
 namespace {
@@ -27,7 +28,9 @@ class PvProxy : public casPV {
 public:
     PvProxy(PyObject* pv)
         : pv{pv}
-    {}
+    {
+        // No GIL, don't use the python API
+    }
 
     static PyObject* name(PyObject* self, PyObject*)
     {
@@ -117,13 +120,12 @@ public:
                     PyErr_WriteUnraisable(fn);
                     PyErr_Clear();
                 }
+                Py_DECREF(fn);
 
                 if (PyLong_Check(result)) {
-                    long count = PyLong_AsLong(result);
-                    ret = count > 1;
+                    ret = 1;
                 }
                 Py_XDECREF(result);
-                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
@@ -145,6 +147,7 @@ public:
                     PyErr_WriteUnraisable(fn);
                     PyErr_Clear();
                 }
+                Py_DECREF(fn);
 
                 if (result) {
                     aitIndex bound = PyLong_AsLong(result);
@@ -154,7 +157,6 @@ public:
 
                     Py_DECREF(result);
                 }
-                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
@@ -167,7 +169,7 @@ public:
 
     static PyObject* count(PyObject* self, PyObject*)
     {
-        return PyLong_FromLong(1);
+        Py_RETURN_NONE;
     }
 
     virtual caStatus read(casCtx const& ctx, gdd& prototype) override
@@ -195,7 +197,8 @@ public:
             if (type != aitEnumInvalid) {
                 PyObject* fn = PyObject_GetAttrString(pv, "read");
                 if (fn) {
-                    PyObject* result = PyObject_CallFunction(fn, nullptr);
+                    PyObject* result = PyObject_CallFunction(fn, "(N)",
+                        create_async_context(ctx, &prototype, type));
                     if (PyErr_Occurred()) {
                         PyErr_WriteUnraisable(fn);
                         PyErr_Clear();
@@ -203,7 +206,9 @@ public:
                     Py_DECREF(fn);
 
                     if (result and result != Py_None) {
-                        if (to_gdd(result, type, prototype)) {
+                        if (give_async_read_to_server(result)) {
+                            ret = S_casApp_asyncCompletion;
+                        } else if (to_gdd(result, type, prototype)) {
                             ret = S_casApp_success;
                         }
                         Py_DECREF(result);
@@ -230,26 +235,30 @@ public:
 
         caStatus ret = S_casApp_noSupport;
         PyGILState_STATE gstate = PyGILState_Ensure();
-            PyObject* args = from_gdd(value, pv_struct->use_numpy);
-            if (args) {
-                PyObject* fn = PyObject_GetAttrString(pv, "write");
-                if (fn) {
-                    PyObject* result = PyObject_CallObject(fn, args);
+            PyObject* fn = PyObject_GetAttrString(pv, "write");
+            if (fn) {
+                PyObject* value_timestamp = from_gdd(value, pv_struct->use_numpy);
+                if (value_timestamp) {
+                    PyObject* result = PyObject_CallFunction(fn, "(OON)",
+                        PyTuple_GET_ITEM(value_timestamp, 0),
+                        PyTuple_GET_ITEM(value_timestamp, 1),
+                        create_async_context(ctx, nullptr, aitEnumInvalid));
                     if (PyErr_Occurred()) {
                         PyErr_WriteUnraisable(fn);
                         PyErr_Clear();
                     }
-                    Py_DECREF(fn);
+                    Py_DECREF(value_timestamp);
 
                     if (result) {
-                        if (PyObject_IsTrue(result)) {
+                        if (give_async_write_to_server(result)) {
+                            ret = S_casApp_asyncCompletion;
+                        } else if (PyObject_IsTrue(result)) {
                             ret = S_casApp_success;
                         }
                         Py_DECREF(result);
                     }
                 }
-
-                Py_DECREF(args);
+                Py_DECREF(fn);
             }
 
             if (PyErr_Occurred()) {
@@ -273,7 +282,6 @@ public:
         if (not PyArg_ParseTuple(args, "OO", &py_events, &py_values)) return nullptr;
 
 
-        aitEnum type = aitEnumInvalid;
         PyObject* fn = PyObject_GetAttrString(proxy->pv, "type");
         if (not fn) return nullptr;
 
@@ -281,15 +289,25 @@ public:
         Py_DECREF(fn);
         if (not result) return nullptr;
 
+        aitEnum type = aitEnumInvalid;
         bool success = to_ait_enum(result, type);
         Py_DECREF(result);
         if (not success) return nullptr;
 
-        if (type == aitEnumInvalid) return nullptr;
+        if (type == aitEnumInvalid) {
+            PyErr_SetString(PyExc_RuntimeError, "Invalid pv type");
+            return nullptr;
+        }
 
 
-        caServer const* server = static_cast<casPV*>(proxy)->getCAS();
-        if (not server) return nullptr;
+        caServer const* server;
+        Py_BEGIN_ALLOW_THREADS
+            server = static_cast<casPV*>(proxy)->getCAS();
+        Py_END_ALLOW_THREADS
+        if (not server) {
+            // not installed into a server, do nothing
+            Py_RETURN_NONE;
+        }
 
         casEventMask mask;
         if (not to_event_mask(py_events, mask, *server)) return nullptr;
@@ -301,7 +319,9 @@ public:
         }
 
         try {
-            static_cast<casPV*>(proxy)->postEvent(mask, *values);
+            Py_BEGIN_ALLOW_THREADS
+                static_cast<casPV*>(proxy)->postEvent(mask, *values);
+            Py_END_ALLOW_THREADS
         } catch (...) {
             values->unreference();
             PyErr_SetString(PyExc_RuntimeError, "Could not post events");
@@ -397,7 +417,9 @@ void pv_dealloc(PyObject* self)
     Pv* pv = reinterpret_cast<Pv*>(self);
 
     free(pv->name);
-    pv->proxy.reset();
+    Py_BEGIN_ALLOW_THREADS
+        pv->proxy.reset();
+    Py_END_ALLOW_THREADS
 
     Py_TYPE(self)->tp_free(self);
 }
@@ -408,14 +430,19 @@ PyObject* pv_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     if (not self) return nullptr;
 
     Pv* pv = reinterpret_cast<Pv*>(self);
-    pv->proxy.reset(new PvProxy(self));
+    Py_BEGIN_ALLOW_THREADS
+        pv->proxy.reset(new PvProxy(self));
+    Py_END_ALLOW_THREADS
     return self;
 }
 
 // we can't put these inside the PvProxy class
 PyDoc_STRVAR(name__doc__, R"(name()
 
-Return the name of the PV.
+Return the name of the PV. This is the name used on-the-wire, possible
+encoded with some text encoding.
+
+This method is thread-safe.
 
 Returns:
     bytes: The name of the PV given at initialization.
@@ -426,12 +453,16 @@ Destroy the PV.
 
 Request from the server when the PV handler object is no longer
 needed.
+
+This is called from an unspecified thread.
 )");
 PyDoc_STRVAR(type__doc__, R"(type()
 
 Return the type of the PV.
 
-This is called from the server.
+This is called from the server when the PV type is needed.
+
+This is called from an unspecified thread.
 
 Returns:
     :class:`channel_access.common.Type`: Type of the PV.
@@ -440,29 +471,41 @@ PyDoc_STRVAR(count__doc__, R"(count()
 
 Return the number of elements.
 
-This is called from the server.
+This is called from the server when the number of elements is needed for
+an array pv.
+Return ``None`` for a scalar PV.
+
+This is called from an unspecified thread.
 
 Returns:
-    int: Number of elements.
+    int: Number of elements for an array or ``None`` for a scalar.
 )");
-PyDoc_STRVAR(read__doc__, R"(read()
+PyDoc_STRVAR(read__doc__, R"(read(context)
 
 Retreive the attributes of the PV.
 
 This is called from the server when a get request is processed.
 
+This is called from an unspecified thread.
+
+Args:
+    context: A context object needed to create an :class:`AsyncRead` object.
+
 Returns:
     dict: An attributes dictionary with all PV attributes.
 )");
-PyDoc_STRVAR(write__doc__, R"(write(value, timestamp)
+PyDoc_STRVAR(write__doc__, R"(write(value, timestamp, context)
 
 Set the value of the PV.
 
 This is called from the server when a put request is processed.
 
+This is called from an unspecified thread.
+
 Args:
     value: The new value. The type depends on the PV type.
     timestamp: An epics timestamp tuple.
+    context: A context object needed to create an :class:`AsyncWrite` object.
 
 Returns:
     bool: ``True`` if the write was successful, ``False`` otherwise.
@@ -475,6 +518,8 @@ This should be called when any attributes change and events are requested
 (:meth:`interestRegister()`). Depending on which attributes changed the
 ``event_mask`` should be set accordingly.
 
+This method is thread-safe.
+
 Args:
     event_mask (:class:`channel_access.common.Events`): This mask describes
         the events to post.
@@ -483,20 +528,24 @@ Args:
 )");
 PyDoc_STRVAR(interestRegister__doc__, R"(interestRegister()
 
-Inform server about changes.
+Request to inform the server about changes.
 
 Request from the server that events should be posted
-when attributes change.
+when attributes change, see :meth:`postEvents()`.
+
+This is called from an unspecified thread.
 
 Returns:
     bool: ``True`` if the request was successful, ``False`` otherwise.
 )");
 PyDoc_STRVAR(interestDelete__doc__, R"(interestDelete()
 
-Don't inform server about changes.
+Don't inform server about changes any more.
 
 Request from the server that events should not be posted any more
 when attributes change.
+
+This is called from an unspecified thread.
 )");
 
 PyMethodDef pv_methods[] = {
@@ -515,6 +564,9 @@ PyMethodDef pv_methods[] = {
 PyDoc_STRVAR(use_numpy__doc__, R"(use_numpy
 
 bool: ``True`` if numpy arrays are used, ``False`` otherwise.
+
+This can be changed any time. For any new request the new value is used
+when processing the value attribute.
 )");
 PyMemberDef pv_members[] = {
     {"use_numpy",  T_BOOL,   offsetof(Pv, use_numpy), 0, use_numpy__doc__},
@@ -528,6 +580,9 @@ A user defined class should derive from this class and override
 the appropiate methods to inform the server about the properties
 of the PV and handle requests for it. The default implementations
 represent a scalar string PV which rejects all read/write access.
+
+Care must be taken when implementing the methods because they are
+called from unspecified threads and must be thread-safe.
 
 The following keys can occur in an attributes dictionary:
 
@@ -593,44 +648,16 @@ Args:
         main name.
 )");
 PyTypeObject pv_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "ca_server.cas.PV",                        /* tp_name */
-    sizeof(Pv),                                /* tp_basicsize */
-    0,                                         /* tp_itemsize */
-    pv_dealloc,                                /* tp_dealloc */
-    nullptr,                                   /* tp_print */
-    nullptr,                                   /* tp_getattr */
-    nullptr,                                   /* tp_setattr */
-    nullptr,                                   /* tp_as_async */
-    nullptr,                                   /* tp_repr */
-    nullptr,                                   /* tp_as_number */
-    nullptr,                                   /* tp_as_sequence */
-    nullptr,                                   /* tp_as_mapping */
-    nullptr,                                   /* tp_hash */
-    nullptr,                                   /* tp_call */
-    nullptr,                                   /* tp_str */
-    nullptr,                                   /* tp_getattro */
-    nullptr,                                   /* tp_setattro */
-    nullptr,                                   /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,  /* tp_flags */
-    pv__doc__,                                 /* tp_doc */
-    nullptr,                                   /* tp_traverse */
-    nullptr,                                   /* tp_clear */
-    nullptr,                                   /* tp_richcompare */
-    0,                                         /* tp_weaklistoffset */
-    nullptr,                                   /* tp_iter */
-    nullptr,                                   /* tp_iternext */
-    pv_methods,                                /* tp_methods */
-    pv_members,                                /* tp_members */
-    nullptr,                                   /* tp_getset */
-    nullptr,                                   /* tp_base */
-    nullptr,                                   /* tp_dict */
-    nullptr,                                   /* tp_descr_get */
-    nullptr,                                   /* tp_descr_set */
-    0,                                         /* tp_dictoffset */
-    pv_init,                                   /* tp_init */
-    nullptr,                                   /* tp_alloc */
-    pv_new,                                    /* tp_new */
+    PyVarObject_HEAD_INIT(nullptr, 0)
+    .tp_name = "ca_server.cas.PV",
+    .tp_basicsize = sizeof(Pv),
+    .tp_dealloc = pv_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc = pv__doc__,
+    .tp_methods = pv_methods,
+    .tp_members = pv_members,
+    .tp_init = pv_init,
+    .tp_new = pv_new,
 };
 
 }

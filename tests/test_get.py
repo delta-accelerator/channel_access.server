@@ -44,7 +44,7 @@ def test_get_enum(server):
 @pytest.mark.parametrize("type_", common.INT_TYPES)
 def test_get_int_array(server, type_):
     test_values = tuple(range(10))
-    pv = server.createPV('CAS:Test', type_, count=len(test_values), attributes = {
+    pv = server.createPV('CAS:Test', type_, attributes = {
         'value': test_values
     }, use_numpy=False)
     values = tuple(map(int, common.caget('CAS:Test', array=True)))
@@ -53,7 +53,7 @@ def test_get_int_array(server, type_):
 @pytest.mark.parametrize("type_", common.FLOAT_TYPES)
 def test_get_float_array(server, type_):
     test_values = tuple( x * 3.141 for x in list(range(10)) )
-    pv = server.createPV('CAS:Test', type_, count=len(test_values), attributes = {
+    pv = server.createPV('CAS:Test', type_, attributes = {
         'value': test_values
     }, use_numpy=False)
     values = tuple(map(float, common.caget('CAS:Test', array=True)))
@@ -62,7 +62,7 @@ def test_get_float_array(server, type_):
 def test_get_enum_array(server):
     strings = ('a', 'b', 'c', 'd')
     test_values = ( 2, 0, 1, 1, 0, 0, 3, 1, 3, 2 )
-    pv = server.createPV('CAS:Test', ca.Type.ENUM, count=len(test_values), attributes = {
+    pv = server.createPV('CAS:Test', ca.Type.ENUM, attributes = {
         'enum_strings': strings,
         'value': test_values
     }, use_numpy=False)
@@ -78,7 +78,7 @@ def test_get_int_array_numpy(server, type_):
     import numpy
 
     test_values = numpy.arange(10)
-    pv = server.createPV('CAS:Test', type_, count=len(test_values), attributes = {
+    pv = server.createPV('CAS:Test', type_, attributes = {
         'value': test_values
     }, use_numpy=True)
     values = numpy.array(list(map(int, common.caget('CAS:Test', array=True))))
@@ -90,7 +90,7 @@ def test_get_float_array_numpy(server, type_):
     import numpy
 
     test_values = 3.141 * numpy.arange(10)
-    pv = server.createPV('CAS:Test', type_, count=len(test_values), attributes = {
+    pv = server.createPV('CAS:Test', type_, attributes = {
         'value': test_values
     }, use_numpy=True)
     values = numpy.array(list(map(float, common.caget('CAS:Test', array=True))))
@@ -103,7 +103,7 @@ def test_get_enum_array_numpy(server):
     strings = ('a', 'b', 'c', 'd')
     test_values = numpy.array([2, 0, 1, 1, 0, 0, 3, 1, 3, 2])
     string_values = numpy.array([ strings[x] for x in test_values ])
-    pv = server.createPV('CAS:Test', ca.Type.ENUM, count=len(test_values), attributes = {
+    pv = server.createPV('CAS:Test', ca.Type.ENUM, attributes = {
         'enum_strings': strings,
         'value': test_values
     }, use_numpy=True)

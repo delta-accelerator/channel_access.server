@@ -23,7 +23,9 @@ class ServerProxy : public caServer {
 public:
     ServerProxy(PyObject* server)
         : server{server}
-    {}
+    {
+        // No GIL, don't use the python API
+    }
 
     virtual pvExistReturn pvExistTest(casCtx const& ctx,
         caNetAddr const& clientAddress, char const* pPVAliasName) override
@@ -117,13 +119,19 @@ int server_init(PyObject* self, PyObject* args, PyObject* kwds)
 void server_dealloc(PyObject* self)
 {
     Server* server = reinterpret_cast<Server*>(self);
-    server->proxy.reset();
+    Py_BEGIN_ALLOW_THREADS
+        server->proxy.reset();
+    Py_END_ALLOW_THREADS
 
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* server_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
+    // cas creates non-python threads so we must ensure that python
+    // threading is initialized
+    PyEval_InitThreads();
+
     PyObject* self = type->tp_alloc(type, 0);
     if (not self) {
         PyErr_SetString(PyExc_RuntimeError, "Could not allocate new Server");
@@ -132,7 +140,9 @@ PyObject* server_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
     Server* server = reinterpret_cast<Server*>(self);
     try {
-        server->proxy.reset(new ServerProxy(self));
+        Py_BEGIN_ALLOW_THREADS
+            server->proxy.reset(new ServerProxy(self));
+        Py_END_ALLOW_THREADS
     } catch (...) {
         PyErr_SetString(PyExc_RuntimeError, "Could not create ServerProxy");
         return nullptr;
@@ -143,6 +153,9 @@ PyObject* server_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(pvExistTest__doc__, R"(pvExistTest(address, name)
 
 Return wether/where the PV ``name`` exists.
+
+This method is called from an unspecified thread when a search request is
+received.
 
 Args:
     address (tuple): A tuple ``(ip, port)`` which identifies a client.
@@ -156,6 +169,9 @@ Returns:
 PyDoc_STRVAR(pvAttach__doc__, R"(pvAttach(name)
 
 Return a PV handler object for ``name``.
+
+This method is called from an unspecified thread when a channel is
+created by a client.
 
 If a :class:`PV` instance is returned then the server will hold
 a reference to it as long as it is needed.
@@ -186,46 +202,21 @@ This class handles requests for PV connections.
 When creating a channel access server a user defined class should derive
 from this class and implement the methods :meth:`pvExistTest` and
 :meth:`pvAttach`. The default implementations reject all requests.
+
+It is unspecified if the server uses multiple threads internally. Care
+must be taken when implementing the above methods.
 )");
 PyTypeObject server_type = {
     PyVarObject_HEAD_INIT(nullptr, 0)
-    "ca_server.cas.Server",                    /* tp_name */
-    sizeof(Server),                            /* tp_basicsize */
-    0,                                         /* tp_itemsize */
-    server_dealloc,                            /* tp_dealloc */
-    nullptr,                                   /* tp_print */
-    nullptr,                                   /* tp_getattr */
-    nullptr,                                   /* tp_setattr */
-    nullptr,                                   /* tp_as_async */
-    nullptr,                                   /* tp_repr */
-    nullptr,                                   /* tp_as_number */
-    nullptr,                                   /* tp_as_sequence */
-    nullptr,                                   /* tp_as_mapping */
-    nullptr,                                   /* tp_hash */
-    nullptr,                                   /* tp_call */
-    nullptr,                                   /* tp_str */
-    nullptr,                                   /* tp_getattro */
-    nullptr,                                   /* tp_setattro */
-    nullptr,                                   /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,  /* tp_flags */
-    server__doc__,                             /* tp_doc */
-    nullptr,                                   /* tp_traverse */
-    nullptr,                                   /* tp_clear */
-    nullptr,                                   /* tp_richcompare */
-    0,                                         /* tp_weaklistoffset */
-    nullptr,                                   /* tp_iter */
-    nullptr,                                   /* tp_iternext */
-    server_methods,                            /* tp_methods */
-    server_members,                            /* tp_members */
-    nullptr,                                   /* tp_getset */
-    nullptr,                                   /* tp_base */
-    nullptr,                                   /* tp_dict */
-    nullptr,                                   /* tp_descr_get */
-    nullptr,                                   /* tp_descr_set */
-    0,                                         /* tp_dictoffset */
-    server_init,                               /* tp_init */
-    nullptr,                                   /* tp_alloc */
-    server_new,                                /* tp_new */
+    .tp_name = "ca_server.cas.Server",
+    .tp_basicsize = sizeof(Server),
+    .tp_dealloc = server_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc = server__doc__,
+    .tp_methods = server_methods,
+    .tp_members = server_members,
+    .tp_init = server_init,
+    .tp_new = server_new,
 };
 
 }
