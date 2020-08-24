@@ -208,43 +208,15 @@ must be taken when implementing the above methods.
 )");
 PyTypeObject server_type = {
     PyVarObject_HEAD_INIT(nullptr, 0)
-    "ca_server.cas.Server",                    /* tp_name */
-    sizeof(Server),                            /* tp_basicsize */
-    0,                                         /* tp_itemsize */
-    server_dealloc,                            /* tp_dealloc */
-    nullptr,                                   /* tp_print */
-    nullptr,                                   /* tp_getattr */
-    nullptr,                                   /* tp_setattr */
-    nullptr,                                   /* tp_as_async */
-    nullptr,                                   /* tp_repr */
-    nullptr,                                   /* tp_as_number */
-    nullptr,                                   /* tp_as_sequence */
-    nullptr,                                   /* tp_as_mapping */
-    nullptr,                                   /* tp_hash */
-    nullptr,                                   /* tp_call */
-    nullptr,                                   /* tp_str */
-    nullptr,                                   /* tp_getattro */
-    nullptr,                                   /* tp_setattro */
-    nullptr,                                   /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,  /* tp_flags */
-    server__doc__,                             /* tp_doc */
-    nullptr,                                   /* tp_traverse */
-    nullptr,                                   /* tp_clear */
-    nullptr,                                   /* tp_richcompare */
-    0,                                         /* tp_weaklistoffset */
-    nullptr,                                   /* tp_iter */
-    nullptr,                                   /* tp_iternext */
-    server_methods,                            /* tp_methods */
-    server_members,                            /* tp_members */
-    nullptr,                                   /* tp_getset */
-    nullptr,                                   /* tp_base */
-    nullptr,                                   /* tp_dict */
-    nullptr,                                   /* tp_descr_get */
-    nullptr,                                   /* tp_descr_set */
-    0,                                         /* tp_dictoffset */
-    server_init,                               /* tp_init */
-    nullptr,                                   /* tp_alloc */
-    server_new,                                /* tp_new */
+    .tp_name = "ca_server.cas.Server",
+    .tp_basicsize = sizeof(Server),
+    .tp_dealloc = server_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc = server__doc__,
+    .tp_methods = server_methods,
+    .tp_members = server_members,
+    .tp_init = server_init,
+    .tp_new = server_new,
 };
 
 }
