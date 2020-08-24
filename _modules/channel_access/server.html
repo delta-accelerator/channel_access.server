@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>channel_access.server &#8212; Channel Access server library</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -33,11 +34,11 @@
   <h1>Source code for channel_access.server</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">weakref</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
 
 <span class="kn">import</span> <span class="nn">channel_access.common</span> <span class="k">as</span> <span class="nn">ca</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">cas</span>
-<span class="kn">from</span> <span class="nn">.cas</span> <span class="k">import</span> <span class="n">ExistsResponse</span><span class="p">,</span> <span class="n">AttachResponse</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">cas</span>
+<span class="kn">from</span> <span class="nn">.cas</span> <span class="kn">import</span> <span class="n">ExistsResponse</span><span class="p">,</span> <span class="n">AttachResponse</span>
 
 <span class="c1"># Only import numpy if compiled with numpy support</span>
 <span class="k">if</span> <span class="n">cas</span><span class="o">.</span><span class="n">NUMPY_SUPPORT</span><span class="p">:</span>
@@ -47,7 +48,7 @@
 
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">isclose</span> <span class="k">as</span> <span class="n">_isclose</span>
+    <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">isclose</span> <span class="k">as</span> <span class="n">_isclose</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="c1"># implement our own according to the python source</span>
     <span class="k">def</span> <span class="nf">_isclose</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">1e-09</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
@@ -57,34 +58,47 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;tolerances must be non-negative&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">or</span> <span class="n">matn</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">diff</span> <span class="o">&lt;=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rel_tol</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="ow">or</span> <span class="n">diff</span> <span class="o">&lt;=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rel_tol</span> <span class="o">*</span> <span class="n">a</span><span class="p">)</span> <span class="ow">or</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="n">abs_tol</span>
 
 
-<div class="viewcode-block" id="default_attributes"><a class="viewcode-back" href="../../server.html#channel_access.server.default_attributes">[docs]</a><span class="k">def</span> <span class="nf">default_attributes</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">):</span>
+<div class="viewcode-block" id="is_sequence"><a class="viewcode-back" href="../../server.html#channel_access.server.is_sequence">[docs]</a><span class="k">def</span> <span class="nf">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return ``True`` if ``value`` is a sequence type.</span>
+
+<span class="sd">    Sequences are types which can be iterated over but are not strings</span>
+<span class="sd">    or bytes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s1">&#39;__iter__&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="default_attributes"><a class="viewcode-back" href="../../server.html#channel_access.server.default_attributes">[docs]</a><span class="k">def</span> <span class="nf">default_attributes</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_numpy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return the default attributes dictionary for new PVs.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        type (:class:`channel_access.common.Type`): Type of the PV.</span>
-<span class="sd">        count (int): Number of elements of the PV.</span>
-<span class="sd">    use_numpy (bool): If ``True`` use numpy arrays.</span>
+<span class="sd">        count (int): Number of elements of the array PV or ``None`` if scalar.</span>
+<span class="sd">        use_numpy (bool): If ``True`` use numpy arrays.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        dict: Attributes dictionary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">use_numpy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">use_numpy</span> <span class="o">=</span> <span class="n">numpy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
     <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">ca</span><span class="o">.</span><span class="n">Status</span><span class="o">.</span><span class="n">UDF</span><span class="p">,</span>
         <span class="s1">&#39;severity&#39;</span><span class="p">:</span> <span class="n">ca</span><span class="o">.</span><span class="n">Severity</span><span class="o">.</span><span class="n">INVALID</span><span class="p">,</span>
-        <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+        <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
     <span class="p">}</span>
 
-    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
         <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="n">use_numpy</span><span class="p">:</span>
@@ -96,12 +110,106 @@
         <span class="n">result</span><span class="p">[</span><span class="s1">&#39;display_limits&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">result</span><span class="p">[</span><span class="s1">&#39;alarm_limits&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">result</span><span class="p">[</span><span class="s1">&#39;warning_limits&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">FLOAT</span> <span class="ow">or</span> <span class="nb">type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">FLOAT</span> <span class="ow">or</span> <span class="n">type_</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">:</span>
             <span class="n">result</span><span class="p">[</span><span class="s1">&#39;precision&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">ENUM</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">ENUM</span><span class="p">:</span>
             <span class="n">result</span><span class="p">[</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,)</span>
 
     <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="failing_write_handler"><a class="viewcode-back" href="../../server.html#channel_access.server.failing_write_handler">[docs]</a><span class="k">def</span> <span class="nf">failing_write_handler</span><span class="p">(</span><span class="n">pv</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A write handler which disallows writes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="AsyncRead"><a class="viewcode-back" href="../../server.html#channel_access.server.AsyncRead">[docs]</a><span class="k">class</span> <span class="nc">AsyncRead</span><span class="p">(</span><span class="n">cas</span><span class="o">.</span><span class="n">AsyncRead</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Asyncronous read completion class.</span>
+
+<span class="sd">    Create an object of this class in a read handler and return it</span>
+<span class="sd">    to signal an asynchronous read operation.</span>
+
+<span class="sd">    When the read operation is completed call the :meth:`complete`</span>
+<span class="sd">    method. If it fails call the :meth:`fail` method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pv</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span> <span class="o">=</span> <span class="n">pv</span>
+
+<div class="viewcode-block" id="AsyncRead.complete"><a class="viewcode-back" href="../../server.html#channel_access.server.AsyncRead.complete">[docs]</a>    <span class="k">def</span> <span class="nf">complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Complete the asynchronous read operation.</span>
+
+<span class="sd">        This updates the PV object and signals the completion to the</span>
+<span class="sd">        server.</span>
+
+<span class="sd">        This method is thread-safe.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attributes (dict): An attributes dictionary with the read</span>
+<span class="sd">                attributes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
+        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="n">pv</span><span class="o">.</span><span class="n">_update_attributes</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
+            <span class="n">attributes</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">_copy_attributes</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="n">pv</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_encode</span><span class="p">(</span><span class="n">attributes</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AsyncRead.fail"><a class="viewcode-back" href="../../server.html#channel_access.server.AsyncRead.fail">[docs]</a>    <span class="k">def</span> <span class="nf">fail</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fail the asynchronous read operation.</span>
+
+<span class="sd">        This signals a failure of the read operation to the server.</span>
+
+<span class="sd">        This method is thread-safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fail</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="AsyncWrite"><a class="viewcode-back" href="../../server.html#channel_access.server.AsyncWrite">[docs]</a><span class="k">class</span> <span class="nc">AsyncWrite</span><span class="p">(</span><span class="n">cas</span><span class="o">.</span><span class="n">AsyncWrite</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Asyncronous write completion class.</span>
+
+<span class="sd">    Create an object of this class in a write handler and return it</span>
+<span class="sd">    to signal an asynchronous write operation.</span>
+
+<span class="sd">    When the write operation is completed call the :meth:`complete`</span>
+<span class="sd">    method. If it fails call the :meth:`fail` method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pv</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span> <span class="o">=</span> <span class="n">pv</span>
+
+<div class="viewcode-block" id="AsyncWrite.complete"><a class="viewcode-back" href="../../server.html#channel_access.server.AsyncWrite.complete">[docs]</a>    <span class="k">def</span> <span class="nf">complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Complete the asynchronous write operation.</span>
+
+<span class="sd">        This updates the PV object and signals the completion to the</span>
+<span class="sd">        server.</span>
+
+<span class="sd">        This method is thread-safe.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            value: The new value for the *value* attribute.</span>
+<span class="sd">            timestamp (datetime): The new value for the *timestamp* attribute.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_update_value_timestamp</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">complete</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="AsyncWrite.fail"><a class="viewcode-back" href="../../server.html#channel_access.server.AsyncWrite.fail">[docs]</a>    <span class="k">def</span> <span class="nf">fail</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fail the asynchronous write operation.</span>
+
+<span class="sd">        This signals a failure of the write operation to the server.</span>
+
+<span class="sd">        This method is thread-safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fail</span><span class="p">()</span></div></div>
 
 
 <div class="viewcode-block" id="PV"><a class="viewcode-back" href="../../server.html#channel_access.server.PV">[docs]</a><span class="k">class</span> <span class="nc">PV</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -132,7 +240,8 @@
 
 <span class="sd">    enum_strings</span>
 <span class="sd">        Tuple with the strings corresponding to the enumeration values.</span>
-<span class="sd">        The length of the tuple must be equal to :data:`PV.count`.</span>
+<span class="sd">        The length of the tuple must be equal to the maximum allowed</span>
+<span class="sd">        value + 1.</span>
 <span class="sd">        The entries are ``bytes`` or ``str`` depending on the</span>
 <span class="sd">        ``encondig`` parameter.</span>
 <span class="sd">        This is only used for enum PVs.</span>
@@ -165,13 +274,53 @@
 <span class="sd">        A tuple ``(minimum, maximum)``. When any value lies outside of the</span>
 <span class="sd">        range the status becomes :class:`channel_access.common.Status.LOLO` or :class:`channel_access.common.Status.HIHI`.</span>
 <span class="sd">        This is only used for numerical PVs.</span>
+
+<span class="sd">    A read handler allows to customize the retrievel of attribute values</span>
+<span class="sd">    via channel access and perform asynchronous reads.</span>
+<span class="sd">    It is called from an unspecified thread and should not block.</span>
+
+<span class="sd">        **Signature**: ``read_handler(pv, context)``</span>
+
+<span class="sd">        **Parameters**:</span>
+
+<span class="sd">            * **pv** (:class:`PV`): The :class:`PV` which attributes are requested.</span>
+<span class="sd">            * **context** : A context object needed to create an :class:`AsyncRead` object.</span>
+
+<span class="sd">        **Returns**:</span>
+<span class="sd">            * ``True`` to allow the read and use the current attributes.</span>
+<span class="sd">            * ``False`` to disallow the read.</span>
+<span class="sd">            * An attributes dictionary to update the attributes and use them.</span>
+<span class="sd">            * An :class:`AsyncRead` object to signal an asynchronous read operation.</span>
+
+<span class="sd">    A write handler allows to customize the change of the PV value</span>
+<span class="sd">    via channel access and perform asynchronous writes.</span>
+<span class="sd">    It is called from an unspecified thread and should not block.</span>
+
+<span class="sd">        **Signature**: ``write_handler(pv, value, timestamp, context)``</span>
+
+<span class="sd">        **Parameters**:</span>
+
+<span class="sd">            * **pv** (:class:`PV`): The :class:`PV` which value is changed.</span>
+<span class="sd">            * **value**: The new value for the *value* attribute.</span>
+<span class="sd">            * **timestmap**: The new value for the *timestamp* attribute.</span>
+<span class="sd">            * **context** : A context object needed to create an :class:`AsyncWrite` object.</span>
+
+<span class="sd">        **Returns**:</span>
+<span class="sd">            * ``True`` to allow the write and update the attributes</span>
+<span class="sd">            * ``False`` to disallow the write.</span>
+<span class="sd">            * A tuple ``(value, timestamp)`` to use instead of the arguments.</span>
+<span class="sd">            * An :class:`AsyncWrite` object to signal an asynchronous write operation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">value_deadband</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">use_numpy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">type_</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">value_deadband</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">read_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">write_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_numpy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            name (str|bytes): Name of the PV.</span>
 <span class="sd">                If ``encoding`` is ``None`` this must be raw bytes.</span>
 <span class="sd">            type (:class:`channel_access.common.Type`): The PV type.</span>
+<span class="sd">            count (int): The initial array length. Use ``None`` for a scalar PV.</span>
 <span class="sd">            attributes (dict): Attributes dictionary with the initial attributes.</span>
 <span class="sd">                These will override the default attributes.</span>
 <span class="sd">            value_deadband (int|float): If any value changes more than this</span>
@@ -180,305 +329,30 @@
 <span class="sd">            archive_deadband (int|float): If any value changes more than this</span>
 <span class="sd">                deadband an archive event is fired.</span>
 <span class="sd">                This is only used for numerical PVs.</span>
+<span class="sd">            read_handler (callable): A callable used as the read handler</span>
+<span class="sd">                for read requests from a client.</span>
+<span class="sd">            write_handler (callable): A callable used as the write handler</span>
+<span class="sd">                for write requests from a client.</span>
+<span class="sd">            read_only (bool): If ``True`` the value can&#39;t be changed via</span>
+<span class="sd">                channel access puts. A custom write handler will overwrite</span>
+<span class="sd">                this setting.</span>
+<span class="sd">            monitor (callable):</span>
+<span class="sd">                This is the initial value for the monitor handler.</span>
 <span class="sd">            encoding (str): The encoding used for the PV name and string</span>
 <span class="sd">                attributes. If ``None`` these values must be bytes.</span>
 <span class="sd">            use_numpy (bool): If ``True`` use numpy arrays. If ``None``</span>
 <span class="sd">                use numpy arrays if numpy support is available.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span> <span class="o">=</span> <span class="n">_PV</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">value_deadband</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        str: The name of this PV.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">use_numpy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        bool: Wether this PV uses numpy arrays for its value.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">use_numpy</span>
-
-    <span class="nd">@use_numpy</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">use_numpy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">use_numpy</span> <span class="o">=</span> <span class="n">value</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        int: The number of elements of this PV.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :class:`channel_access.common.Type`: The type of this PV.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">type</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_enum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        bool: Wether this PV is of enumeration type.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">ENUM</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        dict: The current attributes dictionary</span>
-
-<span class="sd">        This is writeable and updates the attributes dictionary</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="c1"># We need a copy here for thread-safety. All keys and values</span>
-            <span class="c1"># are immutable so a shallow copy is enough.</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="c1"># If the value is a numpy array whe have to create a copy</span>
-            <span class="c1"># because numpy arrays are not immutable.</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span>
-
-    <span class="nd">@attributes</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">):</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_update_attributes</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        datetime: The timestamp in UTC of the last time value has changed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;timestamp&#39;</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The current value of the PV.</span>
-
-<span class="sd">        This is writeable and updates the value and timestamp.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
-            <span class="c1"># If the value is a numpy array whe have to create a copy</span>
-            <span class="c1"># because numpy arrays are not immutable.</span>
-            <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">value</span>
-
-    <span class="nd">@value</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">())</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :class:`channel_access.common.Status`: The current status.</span>
-
-<span class="sd">        This is writeable and updates the status.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">)</span>
-
-    <span class="nd">@status</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_status_severity</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;severity&#39;</span><span class="p">))</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">severity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :class:`channel_access.common.Severity`: The current severity.</span>
-
-<span class="sd">        This is writeable and updates the severity.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;severity&#39;</span><span class="p">)</span>
-
-    <span class="nd">@severity</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">severity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_status_severity</span><span class="p">(</span><span class="n">pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">status_severity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        tuple(:class:`channel_access.common.Status`, :class:`channel_access.common.Severity`): The current status and severity.</span>
-
-<span class="sd">        This is writeable and updates the status and severity at</span>
-<span class="sd">        the same time.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;severity&#39;</span><span class="p">))</span>
-
-    <span class="nd">@status_severity</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">status_severity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_status_severity</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">precision</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        int: The current precision.</span>
-
-<span class="sd">        This is writeable and update the precision.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;precision&#39;</span><span class="p">)</span>
-
-    <span class="nd">@precision</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">precision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;precision&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">unit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        str|bytes: The current unit.</span>
-
-<span class="sd">        The type depends on the ``encoding`` parameter.</span>
-
-<span class="sd">        This is writeable and updates the unit.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;unit&#39;</span><span class="p">)</span>
-
-    <span class="nd">@unit</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">enum_strings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        tuple(str|bytes): The current enumeration strings.</span>
-
-<span class="sd">        The type depends on the ``encoding`` parameter.</span>
-
-<span class="sd">        This is writeable and updates the enumeration strings. The length</span>
-<span class="sd">        of the tuple must be equal to the ``count`` parameter.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">)</span>
-
-    <span class="nd">@enum_strings</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">enum_strings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">display_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        tuple(int|float, int|float): The current display limits.</span>
-
-<span class="sd">        This is writeable and updates the display limits:</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;display_limits&#39;</span><span class="p">)</span>
-
-    <span class="nd">@display_limits</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">display_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;display_limits&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">control_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        tuple(int|float, int|float): The control display limits.</span>
-
-<span class="sd">        This is writeable and updates the control display limits.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;control_limits&#39;</span><span class="p">)</span>
-
-    <span class="nd">@control_limits</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">control_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;control_limits&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">warning_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        tuple(int|float, int|float): The warning display limits.</span>
-
-<span class="sd">        This is writeable and updates the warning limits.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;warning_limits&#39;</span><span class="p">)</span>
-
-    <span class="nd">@warning_limits</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">warning_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;warning_limits&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">alarm_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        tuple(int|float, int|float): The alarm display limits.</span>
-
-<span class="sd">        This is writeable and updates the alarm limits.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;alarm_limits&#39;</span><span class="p">)</span>
-
-    <span class="nd">@alarm_limits</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">alarm_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span>
-        <span class="k">with</span> <span class="n">pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;alarm_limits&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">pv</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span></div>
-
-
-<span class="k">class</span> <span class="nc">_PV</span><span class="p">(</span><span class="n">cas</span><span class="o">.</span><span class="n">PV</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    PV implementation.</span>
-
-<span class="sd">    This class handles all requests from the underlying binding class.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">value_deadband</span><span class="p">,</span> <span class="n">archive_deadband</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">use_numpy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">use_numpy</span> <span class="o">=</span> <span class="n">numpy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">=</span> <span class="n">count</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
+        <span class="k">if</span> <span class="n">read_only</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">write_handler</span><span class="p">:</span>
+            <span class="n">write_handler</span> <span class="o">=</span> <span class="n">failing_write_handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span> <span class="o">=</span> <span class="n">_PV</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">use_numpy</span><span class="o">=</span><span class="n">use_numpy</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span>
+            <span class="n">read_handler</span><span class="o">=</span><span class="n">read_handler</span><span class="p">,</span> <span class="n">write_handler</span><span class="o">=</span><span class="n">write_handler</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="n">type_</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_value_deadband</span> <span class="o">=</span> <span class="n">value_deadband</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_archive_deadband</span> <span class="o">=</span> <span class="n">archive_deadband</span>
         <span class="c1"># Used for float comparisons</span>
@@ -486,40 +360,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_absolute_tolerance</span> <span class="o">=</span> <span class="mf">1e-08</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_monitor_handler</span> <span class="o">=</span> <span class="n">monitor</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outstanding_events</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">NONE</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_publish_events</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span> <span class="o">=</span> <span class="n">default_attributes</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span> <span class="o">=</span> <span class="n">default_attributes</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">attributes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_attributes</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Convert a high-level attributes dictionary to a low-level one. &quot;&quot;&quot;</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">attributes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s1">&#39;unit&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;unit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;unit&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="s1">&#39;enum_strings&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">])</span>
-
-            <span class="k">if</span> <span class="s1">&#39;value&#39;</span> <span class="ow">in</span> <span class="n">result</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
-                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="s1">&#39;timestamp&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">datetime_to_epics</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">])</span>
-
-        <span class="k">return</span> <span class="n">result</span>
-
-    <span class="k">def</span> <span class="nf">_decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Convert a low-level value and timestamp to high-level ones. &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">epics_to_datetime</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span>
 
     <span class="c1"># only call with attributes lock held</span>
     <span class="k">def</span> <span class="nf">_update_status_severity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">severity</span><span class="p">):</span>
@@ -542,10 +389,10 @@
 
             <span class="k">if</span> <span class="n">ctrl_limits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ctrl_limits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">ctrl_limits</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
                 <span class="n">clamp</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">ctrl_limits</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">ctrl_limits</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">clamp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">clamp</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">clamp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">value</span>
 
     <span class="c1"># only call with attributes lock held</span>
@@ -557,13 +404,13 @@
             <span class="n">alarm_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;alarm_limits&#39;</span><span class="p">)</span>
             <span class="n">warn_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;warning_limits&#39;</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">lowest</span> <span class="o">=</span> <span class="n">value</span>
-                <span class="n">highest</span> <span class="o">=</span> <span class="n">value</span>
-            <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                 <span class="c1"># For arrays use the extreme values</span>
                 <span class="n">lowest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
                 <span class="n">highest</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lowest</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="n">highest</span> <span class="o">=</span> <span class="n">value</span>
 
             <span class="k">if</span> <span class="n">warn_limits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">warn_limits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">warn_limits</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
                 <span class="k">if</span> <span class="n">lowest</span> <span class="o">&lt;</span> <span class="n">warn_limits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">highest</span> <span class="o">&gt;</span> <span class="n">warn_limits</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
@@ -609,36 +456,63 @@
         <span class="n">status</span><span class="p">,</span> <span class="n">severity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_status_severity</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
         <span class="n">old_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">):</span>
-            <span class="n">isclose</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">_isclose</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_tolerance</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_absolute_tolerance</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">isclose</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
-                    <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">numpy</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_tolerance</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_absolute_tolerance</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">zip</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">old_value</span><span class="p">):</span>
+            <span class="c1"># If old and new_value differ in wether they are sequences or not</span>
+            <span class="c1"># we can&#39;t compare them.</span>
+            <span class="n">value_changed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">old_value</span><span class="p">):</span>
+            <span class="c1"># If the lenth of both sequences are different we can&#39;t</span>
+            <span class="c1"># compare them either.</span>
+            <span class="n">value_changed</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
-                <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">numpy</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">):</span>
+                <span class="c1"># Floating point types can&#39;t be compare with the equal</span>
+                <span class="c1"># operator because of rounding errors</span>
+                <span class="n">isclose</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">_isclose</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_tolerance</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_absolute_tolerance</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                    <span class="c1"># sequences are compared element-wise</span>
+                    <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                        <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">numpy</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_tolerance</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_absolute_tolerance</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">zip</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">isclose</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">value_changed</span> <span class="o">=</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">old_value</span>
+                <span class="c1"># Integer types are compared with the equal operator</span>
+                <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                    <span class="n">value_changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">numpy</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># For simple sequences this compares element-wise</span>
+                    <span class="n">value_changed</span> <span class="o">=</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">old_value</span>
 
         <span class="k">if</span> <span class="n">value_changed</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">ENUM</span><span class="p">):</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">old_value</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
+
+            <span class="c1"># Deadbands are only defined for number types</span>
+            <span class="n">check_deadbands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">ENUM</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">old_value</span><span class="p">):</span>
+                <span class="c1"># If the values differ in wether they are sequences or not,</span>
+                <span class="c1"># deadbands can&#39;t be used.</span>
+                <span class="n">check_deadbands</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">old_value</span><span class="p">):</span>
+                <span class="c1"># If the lenth of both sequences are different we can&#39;t</span>
+                <span class="c1"># use the deadbands either.</span>
+                <span class="n">check_deadbands</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="n">check_deadbands</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                     <span class="c1"># Look at the maximum difference between the old values</span>
                     <span class="c1"># and the new ones.</span>
                     <span class="n">diff</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">zip</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">old_value</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">diff</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_deadband</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_outstanding_events</span> <span class="o">|=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">VALUE</span>
                 <span class="k">if</span> <span class="n">diff</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_archive_deadband</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_outstanding_events</span> <span class="o">|=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">ARCHIVE</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_outstanding_events</span> <span class="o">|=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">VALUE</span> <span class="o">|</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">ARCHIVE</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_status_severity</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">severity</span><span class="p">)</span>
 
     <span class="c1"># only call with attributes lock held</span>
@@ -655,7 +529,7 @@
     <span class="k">def</span> <span class="nf">_update_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Update attributes using an attributes dictionary. &quot;&quot;&quot;</span>
         <span class="n">limits_changed</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;precision&#39;</span><span class="p">,</span> <span class="s1">&#39;enum_strings&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;control_limits&#39;</span><span class="p">,</span> <span class="s1">&#39;display_limits&#39;</span><span class="p">,</span> <span class="s1">&#39;alarm_limits&#39;</span><span class="p">,</span> <span class="s1">&#39;warning_limits&#39;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;precision&#39;</span><span class="p">,</span> <span class="s1">&#39;enum_strings&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;control_limits&#39;</span><span class="p">,</span> <span class="s1">&#39;display_limits&#39;</span><span class="p">,</span> <span class="s1">&#39;alarm_limits&#39;</span><span class="p">,</span> <span class="s1">&#39;warning_limits&#39;</span><span class="p">]:</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attributes</span> <span class="ow">and</span> <span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_outstanding_events</span> <span class="o">|=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">PROPERTY</span>
@@ -685,42 +559,450 @@
     <span class="k">def</span> <span class="nf">_publish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Post events if necessary. &quot;&quot;&quot;</span>
         <span class="n">events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outstanding_events</span>
+        <span class="n">publish_events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publish_events</span>
+        <span class="n">monitor_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monitor_handler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outstanding_events</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">NONE</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publish_events</span> <span class="ow">and</span> <span class="n">events</span> <span class="o">!=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">postEvent</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">events</span> <span class="o">!=</span> <span class="n">ca</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+            <span class="c1"># We need a copy here for thread-safety. This method can</span>
+            <span class="c1"># be called concurrently multiple times and because we</span>
+            <span class="c1"># release the lock when posting the atomicity of this</span>
+            <span class="c1"># call is not ensured without a copy.</span>
+            <span class="n">attributes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_attributes</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span>
+            <span class="c1"># Release attributes lock during calls to prevent deadlock</span>
+            <span class="c1"># when a method which changes the attributes is called.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">publish_events</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">postEvents</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">attributes</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">monitor_handler</span><span class="p">:</span>
+                    <span class="n">monitor_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span>
+    <span class="c1"># only call with attributes lock held</span>
+    <span class="k">def</span> <span class="nf">_copy_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># All keys and values are immutable so a shallow copy is enough.</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c1"># If the value is a numpy array whe have to create a copy</span>
+        <span class="c1"># because numpy arrays are not immutable.</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attributes</span>
 
-    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c1"># only call with attributes lock held</span>
+    <span class="k">def</span> <span class="nf">_copy_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+        <span class="c1"># If the value is a numpy array whe have to create a copy</span>
+        <span class="c1"># because numpy arrays are not immutable.</span>
+        <span class="k">if</span> <span class="n">numpy</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">_set_publish_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_events</span> <span class="o">=</span> <span class="n">value</span>
 
-    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_update_value_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        str: The name of this PV.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">use_numpy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        bool: Wether this PV uses numpy arrays for its value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">use_numpy</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_array</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        bool: Wether this PV is an array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        int: The number of array elements of this PV or ``None`` for a scalar.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :class:`channel_access.common.Type`: The type of this PV.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_enum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        bool: Wether this PV is of enumeration type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">ENUM</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">monitor_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        callable: The monitor handler.</span>
+
+<span class="sd">        The monitor handler is called when the attributes change.</span>
+<span class="sd">        The handler might be called from an unspecified thread and must be</span>
+<span class="sd">        thread-safe. It should also not block.</span>
+
+<span class="sd">        This is writeable and changes the monitor handler. Set it to</span>
+<span class="sd">        ``None`` to disable the handler.</span>
+
+<span class="sd">        **Signature**: ``fn(pv, attributes)``</span>
+
+<span class="sd">        **Parameters**:</span>
+
+<span class="sd">            * **pv** (:class:`PV`): The :class:`PV` object with the</span>
+<span class="sd">              changed values.</span>
+<span class="sd">            * **attributes** (dict): A attributes dictionary with the new attributes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monitor_handler</span>
+
+    <span class="nd">@monitor_handler</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">monitor_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_monitor_handler</span> <span class="o">=</span> <span class="n">handler</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        dict: The current attributes dictionary</span>
+
+<span class="sd">        This is writeable and updates the attributes dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_attributes</span><span class="p">()</span>
+
+    <span class="nd">@attributes</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_attributes</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        datetime: The timestamp in UTC of the last time value has changed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;timestamp&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The current value of the PV.</span>
+
+<span class="sd">        This is writeable and updates the value and timestamp.</span>
+
+<span class="sd">        Wether the PV is an array and the size of the array is dependent</span>
+<span class="sd">        on the type of the value attribute.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_value</span><span class="p">()</span>
+
+    <span class="nd">@value</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_value_timestamp</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">value_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;timestamp&#39;</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_value</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :class:`channel_access.common.Status`: The current status.</span>
+
+<span class="sd">        This is writeable and updates the status.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">)</span>
+
+    <span class="nd">@status</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_status_severity</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;severity&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">severity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :class:`channel_access.common.Severity`: The current severity.</span>
+
+<span class="sd">        This is writeable and updates the severity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;severity&#39;</span><span class="p">)</span>
+
+    <span class="nd">@severity</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">severity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_status_severity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">status_severity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tuple(:class:`channel_access.common.Status`, :class:`channel_access.common.Severity`): The current status and severity.</span>
+
+<span class="sd">        This is writeable and updates the status and severity at</span>
+<span class="sd">        the same time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;severity&#39;</span><span class="p">))</span>
+
+    <span class="nd">@status_severity</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">status_severity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_status_severity</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">precision</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        int: The current precision.</span>
+
+<span class="sd">        This is writeable and update the precision.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;precision&#39;</span><span class="p">)</span>
+
+    <span class="nd">@precision</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">precision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;precision&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        str|bytes: The current unit.</span>
+
+<span class="sd">        The type depends on the ``encoding`` parameter.</span>
+
+<span class="sd">        This is writeable and updates the unit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;unit&#39;</span><span class="p">)</span>
+
+    <span class="nd">@unit</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">enum_strings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tuple(str|bytes): The current enumeration strings.</span>
+
+<span class="sd">        The type depends on the ``encoding`` parameter.</span>
+
+<span class="sd">        This is writeable and updates the enumeration strings. The length</span>
+<span class="sd">        of the tuple must be equal to the maximum value + 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">)</span>
+
+    <span class="nd">@enum_strings</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">enum_strings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">display_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tuple(int|float, int|float): The current display limits.</span>
+
+<span class="sd">        This is writeable and updates the display limits:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;display_limits&#39;</span><span class="p">)</span>
+
+    <span class="nd">@display_limits</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">display_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;display_limits&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">control_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tuple(int|float, int|float): The control display limits.</span>
+
+<span class="sd">        This is writeable and updates the control display limits.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;control_limits&#39;</span><span class="p">)</span>
+
+    <span class="nd">@control_limits</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">control_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;control_limits&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">warning_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tuple(int|float, int|float): The warning display limits.</span>
+
+<span class="sd">        This is writeable and updates the warning limits.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;warning_limits&#39;</span><span class="p">)</span>
+
+    <span class="nd">@warning_limits</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">warning_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;warning_limits&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">alarm_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tuple(int|float, int|float): The alarm display limits.</span>
+
+<span class="sd">        This is writeable and updates the alarm limits.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;alarm_limits&#39;</span><span class="p">)</span>
+
+    <span class="nd">@alarm_limits</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">alarm_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_meta</span><span class="p">(</span><span class="s1">&#39;alarm_limits&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span><span class="p">()</span></div>
+
+
+<span class="k">class</span> <span class="nc">_PV</span><span class="p">(</span><span class="n">cas</span><span class="o">.</span><span class="n">PV</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    cas.PV implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">pv</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">read_handler</span><span class="p">,</span> <span class="n">write_handler</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span> <span class="o">=</span> <span class="n">pv</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_read_handler</span> <span class="o">=</span> <span class="n">read_handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_handler</span> <span class="o">=</span> <span class="n">write_handler</span>
+
+    <span class="k">def</span> <span class="nf">_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Convert a high-level attributes dictionary to a low-level one. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;unit&#39;</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">:</span>
+                <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;unit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;unit&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="s1">&#39;enum_strings&#39;</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">:</span>
+                <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;enum_strings&#39;</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="s1">&#39;value&#39;</span> <span class="ow">in</span> <span class="n">attributes</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
+                <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;timestamp&#39;</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">:</span>
+            <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">datetime_to_epics</span><span class="p">(</span><span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">attributes</span>
+
+    <span class="k">def</span> <span class="nf">_decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Convert a low-level value and timestamp to high-level ones. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">epics_to_datetime</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span>
+
+    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">count</span>
+
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">type</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_handler</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_handler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">AsyncRead</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span>
+            <span class="c1"># Test for the True singleton</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_update_attributes</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                    <span class="n">attributes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_copy_attributes</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">attributes</span><span class="p">:</span>
+            <span class="n">attributes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">attributes</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encode</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_handler</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_handler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">AsyncWrite</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span>
+            <span class="c1"># Test for the True singleton</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="n">result</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_update_value_timestamp</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">interestRegister</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_events</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_set_publish_events</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">interestDelete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attributes_lock</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_events</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">_set_publish_events</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">postEvents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">attributes</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">postEvent</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encode</span><span class="p">(</span><span class="n">attributes</span><span class="p">))</span>
+
+
+<span class="n">_sentinal</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Server"><a class="viewcode-back" href="../../server.html#channel_access.server.Server">[docs]</a><span class="k">class</span> <span class="nc">Server</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Threaded channel access server.</span>
+<span class="sd">    Channel access server.</span>
 
 <span class="sd">    On creation this class creates a server thread which processes</span>
 <span class="sd">    channel access messages.</span>
@@ -733,7 +1015,7 @@
 <span class="sd">        with cas.Server() as server:</span>
 <span class="sd">            pass</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_numpy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_numpy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            encoding (str): If not ``None`` this value is used as a</span>
@@ -744,16 +1026,54 @@
 <span class="sd">                calling :meth:`createPV`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">_Server</span><span class="p">(</span><span class="n">encoding</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span> <span class="o">=</span> <span class="n">use_numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">_Server</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">_ServerThread</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pvs_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakValueDictionary</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_encoded_pvs</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakValueDictionary</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_encoded_aliases</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_alias_to_encoded</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pvs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a list of all active PV objects.</span>
+
+<span class="sd">        The list contains all PV objects which are alive and not garbage</span>
+<span class="sd">        collected.</span>
+
+<span class="sd">        This property is thread-safe.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          list(:class:`PV`): List of active PV objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aliases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a dict of all aliases.</span>
+
+<span class="sd">        This property is thread-safe.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict(alias: name): Alias mappings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Server.shutdown"><a class="viewcode-back" href="../../server.html#channel_access.server.Server.shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -779,52 +1099,131 @@
 <span class="sd">        use the new PV and ignore the other one. Connections made to the</span>
 <span class="sd">        old PV remain active and use the old PV object.</span>
 
+<span class="sd">        This method is thread-safe.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            :class:`PV`: A new PV object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">createPV</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+        <span class="k">if</span> <span class="s1">&#39;encoding&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;encoding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
+        <span class="k">if</span> <span class="s1">&#39;use_numpy&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;use_numpy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span>
+
+        <span class="n">pv</span> <span class="o">=</span> <span class="n">PV</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span><span class="p">[</span><span class="n">pv</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pv</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_encoded_pvs</span><span class="p">[</span><span class="n">pv</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">name</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pv</span>
+        <span class="k">return</span> <span class="n">pv</span></div>
+
+<div class="viewcode-block" id="Server.retreivePV"><a class="viewcode-back" href="../../server.html#channel_access.server.Server.retreivePV">[docs]</a>    <span class="k">def</span> <span class="nf">retreivePV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the active PV object for ``name``.</span>
+
+<span class="sd">        Raises a :class:`KeyError` if no PV object can be found.</span>
+
+<span class="sd">        This method is thread-safe.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): Name of the PV.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            :class:`PV`: A new PV object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs_lock</span><span class="p">:</span>
+            <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span>
+        <span class="k">return</span> <span class="n">pv</span></div>
+
+<div class="viewcode-block" id="Server.addAlias"><a class="viewcode-back" href="../../server.html#channel_access.server.Server.addAlias">[docs]</a>    <span class="k">def</span> <span class="nf">addAlias</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">_sentinal</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add an alternative name for a PV.</span>
+
+<span class="sd">        PVs created with :meth:`createPV` are searched first. If none is found</span>
+<span class="sd">        the alias list ist checked. If an alias exists a second search</span>
+<span class="sd">        using the original name is made and if a PV exists it is used.</span>
+
+<span class="sd">        This method is thread-safe.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alias (str): The alternative name.</span>
+<span class="sd">            name (str): The original name.</span>
+<span class="sd">            encoding (str): The encoding used for the names.</span>
+<span class="sd">                            See *encoding* parameter of :class:`PV` objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="n">_sentinal</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">encoding</span> <span class="o">=</span> <span class="s1">&#39;utf-8&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
+
+        <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">encoded_alias</span> <span class="o">=</span> <span class="n">alias</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
+            <span class="n">encoded_name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">encoded_alias</span> <span class="o">=</span> <span class="n">alias</span>
+            <span class="n">encoded_name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_encoded_aliases</span><span class="p">[</span><span class="n">encoded_alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoded_name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_alias_to_encoded</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoded_alias</span></div>
+
+<div class="viewcode-block" id="Server.removeAlias"><a class="viewcode-back" href="../../server.html#channel_access.server.Server.removeAlias">[docs]</a>    <span class="k">def</span> <span class="nf">removeAlias</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove an alias.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alias (str): The alias to remove</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs_lock</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span>
+            <span class="n">encoded_alias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alias_to_encoded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alias_to_encoded</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoded_aliases</span><span class="p">[</span><span class="n">encoded_alias</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_pv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pv_name</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs_lock</span><span class="p">:</span>
+            <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoded_pvs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pv_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">pv_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoded_aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pv_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">pv_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoded_pvs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pv_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pv</span></div>
 
 
 <span class="k">class</span> <span class="nc">_Server</span><span class="p">(</span><span class="n">cas</span><span class="o">.</span><span class="n">Server</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Server implementation.</span>
-
-<span class="sd">    This stores the created PVs in a weak dictionary and answers</span>
-<span class="sd">    the requests using it.</span>
+<span class="sd">    cas.Server implementation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">use_numpy</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span> <span class="o">=</span> <span class="n">use_numpy</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakValueDictionary</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">server</span>
 
     <span class="k">def</span> <span class="nf">pvExistTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">pv_name</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">pv_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">_get_pv</span><span class="p">(</span><span class="n">pv_name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ExistsResponse</span><span class="o">.</span><span class="n">EXISTS_HERE</span>
+
         <span class="k">return</span> <span class="n">ExistsResponse</span><span class="o">.</span><span class="n">NOT_EXISTS_HERE</span>
 
     <span class="k">def</span> <span class="nf">pvAttach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pv_name</span><span class="p">):</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pv_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">pv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">AttachResponse</span><span class="o">.</span><span class="n">NOT_FOUND</span>
-        <span class="k">return</span> <span class="n">pv</span><span class="o">.</span><span class="n">_pv</span>
+        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">_get_pv</span><span class="p">(</span><span class="n">pv_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pv</span><span class="o">.</span><span class="n">_pv</span>
 
-    <span class="k">def</span> <span class="nf">createPV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;encoding&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;encoding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;use_numpy&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;use_numpy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_numpy</span>
-        <span class="n">pv</span> <span class="o">=</span> <span class="n">PV</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="c1"># Store the raw bytes name in the dictionary</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pvs</span><span class="p">[</span><span class="n">pv</span><span class="o">.</span><span class="n">_pv</span><span class="o">.</span><span class="n">name</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pv</span>
-        <span class="k">return</span> <span class="n">pv</span>
+        <span class="k">return</span> <span class="n">AttachResponse</span><span class="o">.</span><span class="n">NOT_FOUND</span>
 
 
 <span class="k">class</span> <span class="nc">_ServerThread</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A thread calling cas.process() until :meth:`stop()` is called.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_should_stop</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 
@@ -874,15 +1273,15 @@
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -891,7 +1290,7 @@
       
       
       
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

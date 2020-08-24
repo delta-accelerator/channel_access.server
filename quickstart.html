@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quickstart &#8212; Channel Access server library</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="API Reference" href="api.html" />
@@ -36,6 +37,7 @@
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
 <p>This library contains a low-level binding to the cas library in EPICS base
 and a thread-safe high level interface to create channel access servers.</p>
+<p>For the client implementation see <a class="reference external" href="https://pypi.org/project/channel_access.client">channel_access.client</a>.</p>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>Before installing the library, the environment variables <code class="docutils literal notranslate"><span class="pre">EPICS_BASE</span></code>
@@ -59,12 +61,12 @@ can be set to <code class="docutils literal notranslate"><span class="pre">False
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
 <p>This example shows a simple server with a PV counting up:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">channel_access.common</span> <span class="kn">as</span> <span class="nn">ca</span>
-<span class="kn">import</span> <span class="nn">channel_access.server</span> <span class="kn">as</span> <span class="nn">cas</span>
+<span class="kn">import</span> <span class="nn">channel_access.common</span> <span class="k">as</span> <span class="nn">ca</span>
+<span class="kn">import</span> <span class="nn">channel_access.server</span> <span class="k">as</span> <span class="nn">cas</span>
 
 <span class="k">with</span> <span class="n">cas</span><span class="o">.</span><span class="n">Server</span><span class="p">()</span> <span class="k">as</span> <span class="n">server</span><span class="p">:</span>
     <span class="n">pv</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">createPV</span><span class="p">(</span><span class="s1">&#39;CAS:Test&#39;</span><span class="p">,</span> <span class="n">ca</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">LONG</span><span class="p">)</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">pv</span><span class="o">.</span><span class="n">value</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
 </pre></div>
@@ -75,7 +77,7 @@ can be set to <code class="docutils literal notranslate"><span class="pre">False
 <p>The documentation is available <a class="reference external" href="https://delta-accelerator.github.io/channel_access.server">online</a> or it can be
 generated from the source code with <em>sphinx</em>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">repository</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span><span class="p">[</span><span class="n">doc</span><span class="p">]</span>
 <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">build_sphinx</span>
 </pre></div>
 </div>
@@ -92,6 +94,7 @@ generated from the source code with <em>sphinx</em>:</p>
 <h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
 <p>Tests are run with <em>pytest</em>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">repository</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span>
 <span class="n">pytest</span> <span class="o">-</span><span class="n">v</span>
 </pre></div>
 </div>
@@ -156,15 +159,15 @@ generated from the source code with <em>sphinx</em>:</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -173,7 +176,7 @@ generated from the source code with <em>sphinx</em>:</p>
       
       
       
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>High-level thread-safe interface &#8212; Channel Access server library</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Low-level cas binding" href="server.cas.html" />
@@ -34,9 +35,77 @@
             
   <div class="section" id="module-channel_access.server">
 <span id="high-level-thread-safe-interface"></span><h1>High-level thread-safe interface<a class="headerlink" href="#module-channel_access.server" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
+<dt id="channel_access.server.AsyncRead">
+<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.</code><code class="sig-name descname">AsyncRead</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pv</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.AsyncRead" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asyncronous read completion class.</p>
+<p>Create an object of this class in a read handler and return it
+to signal an asynchronous read operation.</p>
+<p>When the read operation is completed call the <a class="reference internal" href="#channel_access.server.AsyncRead.complete" title="channel_access.server.AsyncRead.complete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">complete()</span></code></a>
+method. If it fails call the <a class="reference internal" href="#channel_access.server.AsyncRead.fail" title="channel_access.server.AsyncRead.fail"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fail()</span></code></a> method.</p>
+<dl class="py method">
+<dt id="channel_access.server.AsyncRead.complete">
+<code class="sig-name descname">complete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attributes</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead.complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.AsyncRead.complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Complete the asynchronous read operation.</p>
+<p>This updates the PV object and signals the completion to the
+server.</p>
+<p>This method is thread-safe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>attributes</strong> (<em>dict</em>) – An attributes dictionary with the read
+attributes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="channel_access.server.AsyncRead.fail">
+<code class="sig-name descname">fail</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead.fail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.AsyncRead.fail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fail the asynchronous read operation.</p>
+<p>This signals a failure of the read operation to the server.</p>
+<p>This method is thread-safe.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="channel_access.server.AsyncWrite">
+<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.</code><code class="sig-name descname">AsyncWrite</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pv</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.AsyncWrite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asyncronous write completion class.</p>
+<p>Create an object of this class in a write handler and return it
+to signal an asynchronous write operation.</p>
+<p>When the write operation is completed call the <a class="reference internal" href="#channel_access.server.AsyncWrite.complete" title="channel_access.server.AsyncWrite.complete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">complete()</span></code></a>
+method. If it fails call the <a class="reference internal" href="#channel_access.server.AsyncWrite.fail" title="channel_access.server.AsyncWrite.fail"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fail()</span></code></a> method.</p>
+<dl class="py method">
+<dt id="channel_access.server.AsyncWrite.complete">
+<code class="sig-name descname">complete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">timestamp</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite.complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.AsyncWrite.complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Complete the asynchronous write operation.</p>
+<p>This updates the PV object and signals the completion to the
+server.</p>
+<p>This method is thread-safe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – The new value for the <em>value</em> attribute.</p></li>
+<li><p><strong>timestamp</strong> (<em>datetime</em>) – The new value for the <em>timestamp</em> attribute.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="channel_access.server.AsyncWrite.fail">
+<code class="sig-name descname">fail</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite.fail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.AsyncWrite.fail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fail the asynchronous write operation.</p>
+<p>This signals a failure of the write operation to the server.</p>
+<p>This method is thread-safe.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="channel_access.server.PV">
-<em class="property">class </em><code class="descclassname">channel_access.server.</code><code class="descname">PV</code><span class="sig-paren">(</span><em>name</em>, <em>type</em>, <em>count=1</em>, <em>*</em>, <em>attributes=None</em>, <em>value_deadband=0</em>, <em>archive_deadband=0</em>, <em>encoding='utf-8'</em>, <em>use_numpy=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#PV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.PV" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.</code><code class="sig-name descname">PV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">type_</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">count</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">attributes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">value_deadband</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">archive_deadband</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">read_handler</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">write_handler</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">read_only</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="o">=</span><span class="default_value">'utf-8'</span></em>, <em class="sig-param"><span class="n">monitor</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_numpy</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#PV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.PV" title="Permalink to this definition">¶</a></dt>
 <dd><p>A channel access PV.</p>
 <p>This class gives thread-safe access to a channel access PV.
 Always create PV objects through <a class="reference internal" href="#channel_access.server.Server.createPV" title="channel_access.server.Server.createPV"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Server.createPV()</span></code></a>.</p>
@@ -56,7 +125,8 @@ For arrays this is a sequence of the corresponding values.</p>
 changed.</p>
 </dd>
 <dt>enum_strings</dt><dd><p>Tuple with the strings corresponding to the enumeration values.
-The length of the tuple must be equal to <a class="reference internal" href="#channel_access.server.PV.count" title="channel_access.server.PV.count"><code class="xref py py-data docutils literal notranslate"><span class="pre">PV.count</span></code></a>.
+The length of the tuple must be equal to the maximum allowed
+value + 1.
 The entries are <code class="docutils literal notranslate"><span class="pre">bytes</span></code> or <code class="docutils literal notranslate"><span class="pre">str</span></code> depending on the
 <code class="docutils literal notranslate"><span class="pre">encondig</span></code> parameter.
 This is only used for enum PVs.</p>
@@ -85,12 +155,59 @@ range the status becomes <code class="xref py py-class docutils literal notransl
 This is only used for numerical PVs.</p>
 </dd>
 </dl>
+<p>A read handler allows to customize the retrievel of attribute values
+via channel access and perform asynchronous reads.
+It is called from an unspecified thread and should not block.</p>
+<blockquote>
+<div><p><strong>Signature</strong>: <code class="docutils literal notranslate"><span class="pre">read_handler(pv,</span> <span class="pre">context)</span></code></p>
+<p><strong>Parameters</strong>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>pv</strong> (<a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a>): The <a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a> which attributes are requested.</p></li>
+<li><p><strong>context</strong> : A context object needed to create an <a class="reference internal" href="#channel_access.server.AsyncRead" title="channel_access.server.AsyncRead"><code class="xref py py-class docutils literal notranslate"><span class="pre">AsyncRead</span></code></a> object.</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt><strong>Returns</strong>:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">True</span></code> to allow the read and use the current attributes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">False</span></code> to disallow the read.</p></li>
+<li><p>An attributes dictionary to update the attributes and use them.</p></li>
+<li><p>An <a class="reference internal" href="#channel_access.server.AsyncRead" title="channel_access.server.AsyncRead"><code class="xref py py-class docutils literal notranslate"><span class="pre">AsyncRead</span></code></a> object to signal an asynchronous read operation.</p></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+<p>A write handler allows to customize the change of the PV value
+via channel access and perform asynchronous writes.
+It is called from an unspecified thread and should not block.</p>
+<blockquote>
+<div><p><strong>Signature</strong>: <code class="docutils literal notranslate"><span class="pre">write_handler(pv,</span> <span class="pre">value,</span> <span class="pre">timestamp,</span> <span class="pre">context)</span></code></p>
+<p><strong>Parameters</strong>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>pv</strong> (<a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a>): The <a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a> which value is changed.</p></li>
+<li><p><strong>value</strong>: The new value for the <em>value</em> attribute.</p></li>
+<li><p><strong>timestmap</strong>: The new value for the <em>timestamp</em> attribute.</p></li>
+<li><p><strong>context</strong> : A context object needed to create an <a class="reference internal" href="#channel_access.server.AsyncWrite" title="channel_access.server.AsyncWrite"><code class="xref py py-class docutils literal notranslate"><span class="pre">AsyncWrite</span></code></a> object.</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt><strong>Returns</strong>:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">True</span></code> to allow the write and update the attributes</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">False</span></code> to disallow the write.</p></li>
+<li><p>A tuple <code class="docutils literal notranslate"><span class="pre">(value,</span> <span class="pre">timestamp)</span></code> to use instead of the arguments.</p></li>
+<li><p>An <a class="reference internal" href="#channel_access.server.AsyncWrite" title="channel_access.server.AsyncWrite"><code class="xref py py-class docutils literal notranslate"><span class="pre">AsyncWrite</span></code></a> object to signal an asynchronous write operation.</p></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str|bytes</em>) – Name of the PV.
 If <code class="docutils literal notranslate"><span class="pre">encoding</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> this must be raw bytes.</p></li>
 <li><p><strong>type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Type</span></code>) – The PV type.</p></li>
+<li><p><strong>count</strong> (<em>int</em>) – The initial array length. Use <code class="docutils literal notranslate"><span class="pre">None</span></code> for a scalar PV.</p></li>
 <li><p><strong>attributes</strong> (<em>dict</em>) – Attributes dictionary with the initial attributes.
 These will override the default attributes.</p></li>
 <li><p><strong>value_deadband</strong> (<em>int|float</em>) – If any value changes more than this
@@ -99,6 +216,14 @@ This is only used for numerical PVs.</p></li>
 <li><p><strong>archive_deadband</strong> (<em>int|float</em>) – If any value changes more than this
 deadband an archive event is fired.
 This is only used for numerical PVs.</p></li>
+<li><p><strong>read_handler</strong> (<em>callable</em>) – A callable used as the read handler
+for read requests from a client.</p></li>
+<li><p><strong>write_handler</strong> (<em>callable</em>) – A callable used as the write handler
+for write requests from a client.</p></li>
+<li><p><strong>read_only</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> the value can’t be changed via
+channel access puts. A custom write handler will overwrite
+this setting.</p></li>
+<li><p><strong>monitor</strong> (<em>callable</em>) – This is the initial value for the monitor handler.</p></li>
 <li><p><strong>encoding</strong> (<em>str</em>) – The encoding used for the PV name and string
 attributes. If <code class="docutils literal notranslate"><span class="pre">None</span></code> these values must be bytes.</p></li>
 <li><p><strong>use_numpy</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> use numpy arrays. If <code class="docutils literal notranslate"><span class="pre">None</span></code>
@@ -106,9 +231,9 @@ use numpy arrays if numpy support is available.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.alarm_limits">
-<code class="descname">alarm_limits</code><a class="headerlink" href="#channel_access.server.PV.alarm_limits" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">alarm_limits</code><a class="headerlink" href="#channel_access.server.PV.alarm_limits" title="Permalink to this definition">¶</a></dt>
 <dd><p>The alarm display limits.</p>
 <p>This is writeable and updates the alarm limits.</p>
 <dl class="field-list simple">
@@ -118,9 +243,9 @@ use numpy arrays if numpy support is available.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.attributes">
-<code class="descname">attributes</code><a class="headerlink" href="#channel_access.server.PV.attributes" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">attributes</code><a class="headerlink" href="#channel_access.server.PV.attributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current attributes dictionary</p>
 <p>This is writeable and updates the attributes dictionary</p>
 <dl class="field-list simple">
@@ -130,9 +255,9 @@ use numpy arrays if numpy support is available.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.control_limits">
-<code class="descname">control_limits</code><a class="headerlink" href="#channel_access.server.PV.control_limits" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">control_limits</code><a class="headerlink" href="#channel_access.server.PV.control_limits" title="Permalink to this definition">¶</a></dt>
 <dd><p>The control display limits.</p>
 <p>This is writeable and updates the control display limits.</p>
 <dl class="field-list simple">
@@ -142,10 +267,10 @@ use numpy arrays if numpy support is available.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.count">
-<code class="descname">count</code><a class="headerlink" href="#channel_access.server.PV.count" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of elements of this PV.</p>
+<em class="property">property </em><code class="sig-name descname">count</code><a class="headerlink" href="#channel_access.server.PV.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of array elements of this PV or <code class="docutils literal notranslate"><span class="pre">None</span></code> for a scalar.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>int</p>
@@ -153,9 +278,9 @@ use numpy arrays if numpy support is available.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.display_limits">
-<code class="descname">display_limits</code><a class="headerlink" href="#channel_access.server.PV.display_limits" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">display_limits</code><a class="headerlink" href="#channel_access.server.PV.display_limits" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current display limits.</p>
 <p>This is writeable and updates the display limits:</p>
 <dl class="field-list simple">
@@ -165,13 +290,13 @@ use numpy arrays if numpy support is available.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.enum_strings">
-<code class="descname">enum_strings</code><a class="headerlink" href="#channel_access.server.PV.enum_strings" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">enum_strings</code><a class="headerlink" href="#channel_access.server.PV.enum_strings" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current enumeration strings.</p>
 <p>The type depends on the <code class="docutils literal notranslate"><span class="pre">encoding</span></code> parameter.</p>
 <p>This is writeable and updates the enumeration strings. The length
-of the tuple must be equal to the <code class="docutils literal notranslate"><span class="pre">count</span></code> parameter.</p>
+of the tuple must be equal to the maximum value + 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>tuple(str|bytes)</p>
@@ -179,9 +304,20 @@ of the tuple must be equal to the <code class="docutils literal notranslate"><sp
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
+<dt id="channel_access.server.PV.is_array">
+<em class="property">property </em><code class="sig-name descname">is_array</code><a class="headerlink" href="#channel_access.server.PV.is_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wether this PV is an array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="channel_access.server.PV.is_enum">
-<code class="descname">is_enum</code><a class="headerlink" href="#channel_access.server.PV.is_enum" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">is_enum</code><a class="headerlink" href="#channel_access.server.PV.is_enum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wether this PV is of enumeration type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -190,9 +326,34 @@ of the tuple must be equal to the <code class="docutils literal notranslate"><sp
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
+<dt id="channel_access.server.PV.monitor_handler">
+<em class="property">property </em><code class="sig-name descname">monitor_handler</code><a class="headerlink" href="#channel_access.server.PV.monitor_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>The monitor handler.</p>
+<p>The monitor handler is called when the attributes change.
+The handler might be called from an unspecified thread and must be
+thread-safe. It should also not block.</p>
+<p>This is writeable and changes the monitor handler. Set it to
+<code class="docutils literal notranslate"><span class="pre">None</span></code> to disable the handler.</p>
+<p><strong>Signature</strong>: <code class="docutils literal notranslate"><span class="pre">fn(pv,</span> <span class="pre">attributes)</span></code></p>
+<p><strong>Parameters</strong>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>pv</strong> (<a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a>): The <a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a> object with the
+changed values.</p></li>
+<li><p><strong>attributes</strong> (dict): A attributes dictionary with the new attributes.</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="channel_access.server.PV.name">
-<code class="descname">name</code><a class="headerlink" href="#channel_access.server.PV.name" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#channel_access.server.PV.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>The name of this PV.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -201,9 +362,9 @@ of the tuple must be equal to the <code class="docutils literal notranslate"><sp
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.precision">
-<code class="descname">precision</code><a class="headerlink" href="#channel_access.server.PV.precision" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">precision</code><a class="headerlink" href="#channel_access.server.PV.precision" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current precision.</p>
 <p>This is writeable and update the precision.</p>
 <dl class="field-list simple">
@@ -213,9 +374,9 @@ of the tuple must be equal to the <code class="docutils literal notranslate"><sp
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.severity">
-<code class="descname">severity</code><a class="headerlink" href="#channel_access.server.PV.severity" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">severity</code><a class="headerlink" href="#channel_access.server.PV.severity" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current severity.</p>
 <p>This is writeable and updates the severity.</p>
 <dl class="field-list simple">
@@ -225,9 +386,9 @@ of the tuple must be equal to the <code class="docutils literal notranslate"><sp
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.status">
-<code class="descname">status</code><a class="headerlink" href="#channel_access.server.PV.status" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">status</code><a class="headerlink" href="#channel_access.server.PV.status" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current status.</p>
 <p>This is writeable and updates the status.</p>
 <dl class="field-list simple">
@@ -237,9 +398,9 @@ of the tuple must be equal to the <code class="docutils literal notranslate"><sp
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.status_severity">
-<code class="descname">status_severity</code><a class="headerlink" href="#channel_access.server.PV.status_severity" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">status_severity</code><a class="headerlink" href="#channel_access.server.PV.status_severity" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current status and severity.</p>
 <p>This is writeable and updates the status and severity at
 the same time.</p>
@@ -250,9 +411,9 @@ the same time.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.timestamp">
-<code class="descname">timestamp</code><a class="headerlink" href="#channel_access.server.PV.timestamp" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">timestamp</code><a class="headerlink" href="#channel_access.server.PV.timestamp" title="Permalink to this definition">¶</a></dt>
 <dd><p>The timestamp in UTC of the last time value has changed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -261,9 +422,9 @@ the same time.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.type">
-<code class="descname">type</code><a class="headerlink" href="#channel_access.server.PV.type" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">type</code><a class="headerlink" href="#channel_access.server.PV.type" title="Permalink to this definition">¶</a></dt>
 <dd><p>The type of this PV.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -272,9 +433,9 @@ the same time.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.unit">
-<code class="descname">unit</code><a class="headerlink" href="#channel_access.server.PV.unit" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">unit</code><a class="headerlink" href="#channel_access.server.PV.unit" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current unit.</p>
 <p>The type depends on the <code class="docutils literal notranslate"><span class="pre">encoding</span></code> parameter.</p>
 <p>This is writeable and updates the unit.</p>
@@ -285,9 +446,9 @@ the same time.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.use_numpy">
-<code class="descname">use_numpy</code><a class="headerlink" href="#channel_access.server.PV.use_numpy" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">use_numpy</code><a class="headerlink" href="#channel_access.server.PV.use_numpy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wether this PV uses numpy arrays for its value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -296,16 +457,23 @@ the same time.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="channel_access.server.PV.value">
-<code class="descname">value</code><a class="headerlink" href="#channel_access.server.PV.value" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#channel_access.server.PV.value" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current value of the PV.</p>
 <p>This is writeable and updates the value and timestamp.</p>
+<p>Wether the PV is an array and the size of the array is dependent
+on the type of the value attribute.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
+<dt id="channel_access.server.PV.value_timestamp">
+<em class="property">property </em><code class="sig-name descname">value_timestamp</code><a class="headerlink" href="#channel_access.server.PV.value_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt id="channel_access.server.PV.warning_limits">
-<code class="descname">warning_limits</code><a class="headerlink" href="#channel_access.server.PV.warning_limits" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">warning_limits</code><a class="headerlink" href="#channel_access.server.PV.warning_limits" title="Permalink to this definition">¶</a></dt>
 <dd><p>The warning display limits.</p>
 <p>This is writeable and updates the warning limits.</p>
 <dl class="field-list simple">
@@ -317,10 +485,10 @@ the same time.</p>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="channel_access.server.Server">
-<em class="property">class </em><code class="descclassname">channel_access.server.</code><code class="descname">Server</code><span class="sig-paren">(</span><em>*</em>, <em>encoding=None</em>, <em>use_numpy=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server" title="Permalink to this definition">¶</a></dt>
-<dd><p>Threaded channel access server.</p>
+<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.</code><code class="sig-name descname">Server</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_numpy</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Channel access server.</p>
 <p>On creation this class creates a server thread which processes
 channel access messages.</p>
 <p>The <a class="reference internal" href="#channel_access.server.Server.shutdown" title="channel_access.server.Server.shutdown"><code class="xref py py-meth docutils literal notranslate"><span class="pre">shutdown()</span></code></a> method must be called to stop the server.</p>
@@ -342,9 +510,29 @@ calling <a class="reference internal" href="#channel_access.server.Server.create
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
+<dt id="channel_access.server.Server.addAlias">
+<code class="sig-name descname">addAlias</code><span class="sig-paren">(</span><em class="sig-param">alias</em>, <em class="sig-param">name</em>, <em class="sig-param">*</em>, <em class="sig-param">encoding=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.addAlias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server.addAlias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an alternative name for a PV.</p>
+<p>PVs created with <a class="reference internal" href="#channel_access.server.Server.createPV" title="channel_access.server.Server.createPV"><code class="xref py py-meth docutils literal notranslate"><span class="pre">createPV()</span></code></a> are searched first. If none is found
+the alias list ist checked. If an alias exists a second search
+using the original name is made and if a PV exists it is used.</p>
+<p>This method is thread-safe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alias</strong> (<em>str</em>) – The alternative name.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – The original name.</p></li>
+<li><p><strong>encoding</strong> (<em>str</em>) – The encoding used for the names.
+See <em>encoding</em> parameter of <a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a> objects.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="channel_access.server.Server.createPV">
-<code class="descname">createPV</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.createPV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server.createPV" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">createPV</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.createPV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server.createPV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new channel access PV.</p>
 <p>All arguments are forwarded to the <a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a> class.</p>
 <p>The server does not hold a reference to the returned PV so it
@@ -353,6 +541,7 @@ of the user to keep the PV objects alive as long as they are needed.</p>
 <p>If a PV with an already existing name is created the server will
 use the new PV and ignore the other one. Connections made to the
 old PV remain active and use the old PV object.</p>
+<p>This method is thread-safe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A new PV object.</p>
@@ -363,36 +552,110 @@ old PV remain active and use the old PV object.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="channel_access.server.Server.removeAlias">
+<code class="sig-name descname">removeAlias</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alias</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.removeAlias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server.removeAlias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an alias.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>alias</strong> (<em>str</em>) – The alias to remove</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="channel_access.server.Server.retreivePV">
+<code class="sig-name descname">retreivePV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.retreivePV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server.retreivePV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the active PV object for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<p>Raises a <code class="xref py py-class docutils literal notranslate"><span class="pre">KeyError</span></code> if no PV object can be found.</p>
+<p>This method is thread-safe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of the PV.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A new PV object.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="channel_access.server.Server.shutdown">
-<code class="descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server.shutdown" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.Server.shutdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shutdown the channel access server.</p>
 <p>After this is called no other methods can be called.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt id="channel_access.server.Server.aliases">
+<em class="property">property </em><code class="sig-name descname">aliases</code><a class="headerlink" href="#channel_access.server.Server.aliases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dict of all aliases.</p>
+<p>This property is thread-safe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>name): Alias mappings</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict(alias</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py method">
+<dt id="channel_access.server.Server.pvs">
+<em class="property">property </em><code class="sig-name descname">pvs</code><a class="headerlink" href="#channel_access.server.Server.pvs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all active PV objects.</p>
+<p>The list contains all PV objects which are alive and not garbage
+collected.</p>
+<p>This property is thread-safe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of active PV objects.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list(<a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
 <dt id="channel_access.server.default_attributes">
-<code class="descclassname">channel_access.server.</code><code class="descname">default_attributes</code><span class="sig-paren">(</span><em>type</em>, <em>count</em>, <em>use_numpy</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#default_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.default_attributes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">channel_access.server.</code><code class="sig-name descname">default_attributes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">type_</span></em>, <em class="sig-param"><span class="n">count</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_numpy</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#default_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.default_attributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the default attributes dictionary for new PVs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Type</span></code>) – Type of the PV.</p></li>
-<li><p><strong>count</strong> (<em>int</em>) – Number of elements of the PV.</p></li>
+<li><p><strong>count</strong> (<em>int</em>) – Number of elements of the array PV or <code class="docutils literal notranslate"><span class="pre">None</span></code> if scalar.</p></li>
+<li><p><strong>use_numpy</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> use numpy arrays.</p></li>
 </ul>
 </dd>
-</dl>
-<p>use_numpy (bool): If <code class="docutils literal notranslate"><span class="pre">True</span></code> use numpy arrays.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Attributes dictionary.</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Attributes dictionary.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>dict</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="channel_access.server.failing_write_handler">
+<code class="sig-prename descclassname">channel_access.server.</code><code class="sig-name descname">failing_write_handler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pv</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">timestamp</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#failing_write_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.failing_write_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>A write handler which disallows writes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="channel_access.server.is_sequence">
+<code class="sig-prename descclassname">channel_access.server.</code><code class="sig-name descname">is_sequence</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#is_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel_access.server.is_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">value</span></code> is a sequence type.</p>
+<p>Sequences are types which can be iterated over but are not strings
+or bytes.</p>
 </dd></dl>
 
 </div>
@@ -449,15 +712,15 @@ old PV remain active and use the old PV object.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -466,7 +729,7 @@ old PV remain active and use the old PV object.</p>
       
       
       
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
