@@ -31,12 +31,44 @@ PyDoc_STRVAR(async_context__doc__, R"(
 Asynchronous context object.
 )");
 PyTypeObject async_context_type = {
-    PyVarObject_HEAD_INIT(nullptr, 0)
-    .tp_name = "ca_server.cas.AsyncContext",
-    .tp_basicsize = sizeof(AsyncContext),
-    .tp_dealloc = async_context_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_doc = async_context__doc__,
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "ca_server.cas.AsyncContext",              /* tp_name */
+    sizeof(AsyncContext),                      /* tp_basicsize */
+    0,                                         /* tp_itemsize */
+    async_context_dealloc,                     /* tp_dealloc */
+    nullptr,                                   /* tp_print */
+    nullptr,                                   /* tp_getattr */
+    nullptr,                                   /* tp_setattr */
+    nullptr,                                   /* tp_as_async */
+    nullptr,                                   /* tp_repr */
+    nullptr,                                   /* tp_as_number */
+    nullptr,                                   /* tp_as_sequence */
+    nullptr,                                   /* tp_as_mapping */
+    nullptr,                                   /* tp_hash */
+    nullptr,                                   /* tp_call */
+    nullptr,                                   /* tp_str */
+    nullptr,                                   /* tp_getattro */
+    nullptr,                                   /* tp_setattro */
+    nullptr,                                   /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                        /* tp_flags */
+    async_context__doc__,                      /* tp_doc */
+    nullptr,                                   /* tp_traverse */
+    nullptr,                                   /* tp_clear */
+    nullptr,                                   /* tp_richcompare */
+    0,                                         /* tp_weaklistoffset */
+    nullptr,                                   /* tp_iter */
+    nullptr,                                   /* tp_iternext */
+    nullptr,                                   /* tp_methods */
+    nullptr,                                   /* tp_members */
+    nullptr,                                   /* tp_getset */
+    nullptr,                                   /* tp_base */
+    nullptr,                                   /* tp_dict */
+    nullptr,                                   /* tp_descr_get */
+    nullptr,                                   /* tp_descr_set */
+    0,                                         /* tp_dictoffset */
+    nullptr,                                   /* tp_init */
+    nullptr,                                   /* tp_alloc */
+    nullptr,                                   /* tp_new */
 };
 
 
@@ -174,15 +206,44 @@ Args:
     context: Context object given to the :meth:`PV.write()` method.
 )");
 PyTypeObject async_write_type = {
-    PyVarObject_HEAD_INIT(nullptr, 0)
-    .tp_name = "ca_server.cas.AsyncWrite",
-    .tp_basicsize = sizeof(AsyncWrite),
-    .tp_dealloc = async_write_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_doc = async_write__doc__,
-    .tp_methods = async_write_methods,
-    .tp_init = async_write_init,
-    .tp_new = async_write_new,
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "ca_server.cas.AsyncWrite",                /* tp_name */
+    sizeof(AsyncWrite),                        /* tp_basicsize */
+    0,                                         /* tp_itemsize */
+    async_write_dealloc,                       /* tp_dealloc */
+    nullptr,                                   /* tp_print */
+    nullptr,                                   /* tp_getattr */
+    nullptr,                                   /* tp_setattr */
+    nullptr,                                   /* tp_as_async */
+    nullptr,                                   /* tp_repr */
+    nullptr,                                   /* tp_as_number */
+    nullptr,                                   /* tp_as_sequence */
+    nullptr,                                   /* tp_as_mapping */
+    nullptr,                                   /* tp_hash */
+    nullptr,                                   /* tp_call */
+    nullptr,                                   /* tp_str */
+    nullptr,                                   /* tp_getattro */
+    nullptr,                                   /* tp_setattro */
+    nullptr,                                   /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,  /* tp_flags */
+    async_write__doc__,                        /* tp_doc */
+    nullptr,                                   /* tp_traverse */
+    nullptr,                                   /* tp_clear */
+    nullptr,                                   /* tp_richcompare */
+    0,                                         /* tp_weaklistoffset */
+    nullptr,                                   /* tp_iter */
+    nullptr,                                   /* tp_iternext */
+    async_write_methods,                       /* tp_methods */
+    nullptr,                                   /* tp_members */
+    nullptr,                                   /* tp_getset */
+    nullptr,                                   /* tp_base */
+    nullptr,                                   /* tp_dict */
+    nullptr,                                   /* tp_descr_get */
+    nullptr,                                   /* tp_descr_set */
+    0,                                         /* tp_dictoffset */
+    async_write_init,                          /* tp_init */
+    nullptr,                                   /* tp_alloc */
+    async_write_new,                           /* tp_new */
 };
 
 
@@ -351,15 +412,43 @@ Args:
 )");
 PyTypeObject async_read_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "ca_server.cas.AsyncRead",
-    .tp_basicsize = sizeof(AsyncRead),
-    .tp_dealloc = async_read_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_doc = async_read__doc__,
-    .tp_methods = async_read_methods,
-    .tp_members = async_read_members,
-    .tp_init = async_read_init,
-    .tp_new = async_read_new,
+    "ca_server.cas.AsyncRead",                 /* tp_name */
+    sizeof(AsyncRead),                         /* tp_basicsize */
+    0,                                         /* tp_itemsize */
+    async_read_dealloc,                        /* tp_dealloc */
+    nullptr,                                   /* tp_print */
+    nullptr,                                   /* tp_getattr */
+    nullptr,                                   /* tp_setattr */
+    nullptr,                                   /* tp_as_async */
+    nullptr,                                   /* tp_repr */
+    nullptr,                                   /* tp_as_number */
+    nullptr,                                   /* tp_as_sequence */
+    nullptr,                                   /* tp_as_mapping */
+    nullptr,                                   /* tp_hash */
+    nullptr,                                   /* tp_call */
+    nullptr,                                   /* tp_str */
+    nullptr,                                   /* tp_getattro */
+    nullptr,                                   /* tp_setattro */
+    nullptr,                                   /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,  /* tp_flags */
+    async_read__doc__,                         /* tp_doc */
+    nullptr,                                   /* tp_traverse */
+    nullptr,                                   /* tp_clear */
+    nullptr,                                   /* tp_richcompare */
+    0,                                         /* tp_weaklistoffset */
+    nullptr,                                   /* tp_iter */
+    nullptr,                                   /* tp_iternext */
+    async_read_methods,                        /* tp_methods */
+    async_read_members,                        /* tp_members */
+    nullptr,                                   /* tp_getset */
+    nullptr,                                   /* tp_base */
+    nullptr,                                   /* tp_dict */
+    nullptr,                                   /* tp_descr_get */
+    nullptr,                                   /* tp_descr_set */
+    0,                                         /* tp_dictoffset */
+    async_read_init,                           /* tp_init */
+    nullptr,                                   /* tp_alloc */
+    async_read_new,                            /* tp_new */
 };
 
 }
