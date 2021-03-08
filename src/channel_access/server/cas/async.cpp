@@ -31,7 +31,7 @@ PyDoc_STRVAR(async_context__doc__, R"(
 Asynchronous context object.
 )");
 PyTypeObject async_context_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
+    PyVarObject_HEAD_INIT(nullptr, 0)
     "ca_server.cas.AsyncContext",              /* tp_name */
     sizeof(AsyncContext),                      /* tp_basicsize */
     0,                                         /* tp_itemsize */
@@ -206,7 +206,7 @@ Args:
     context: Context object given to the :meth:`PV.write()` method.
 )");
 PyTypeObject async_write_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
+    PyVarObject_HEAD_INIT(nullptr, 0)
     "ca_server.cas.AsyncWrite",                /* tp_name */
     sizeof(AsyncWrite),                        /* tp_basicsize */
     0,                                         /* tp_itemsize */
@@ -411,7 +411,7 @@ Args:
     context: Context object given to the :meth:`PV.read()` method.
 )");
 PyTypeObject async_read_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
+    PyVarObject_HEAD_INIT(nullptr, 0)
     "ca_server.cas.AsyncRead",                 /* tp_name */
     sizeof(AsyncRead),                         /* tp_basicsize */
     0,                                         /* tp_itemsize */

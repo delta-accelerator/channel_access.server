@@ -648,7 +648,7 @@ Args:
         main name.
 )");
 PyTypeObject pv_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
+    PyVarObject_HEAD_INIT(nullptr, 0)
     "ca_server.cas.PV",                        /* tp_name */
     sizeof(Pv),                                /* tp_basicsize */
     0,                                         /* tp_itemsize */
