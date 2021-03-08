@@ -6,13 +6,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Low-level cas binding &#8212; Channel Access server library</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="High-level thread-safe interface" href="server.html" />
@@ -37,39 +36,39 @@
 <p>Low level wrapper module over the cas interface.</p>
 <dl class="py class">
 <dt id="channel_access.server.cas.ExistsResponse">
-<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.cas.</code><code class="sig-name descname">ExistsResponse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.ExistsResponse" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.cas.</span></code><code class="sig-name descname"><span class="pre">ExistsResponse</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.ExistsResponse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return value for the <a class="reference internal" href="#channel_access.server.cas.Server.pvExistTest" title="channel_access.server.cas.Server.pvExistTest"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Server.pvExistTest()</span></code></a> method.</p>
 <dl class="py attribute">
 <dt id="channel_access.server.cas.ExistsResponse.EXISTS_HERE">
-<code class="sig-name descname">EXISTS_HERE</code><em class="property"> = 0</em><a class="headerlink" href="#channel_access.server.cas.ExistsResponse.EXISTS_HERE" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">EXISTS_HERE</span></code><em class="property"> <span class="pre">=</span> <span class="pre">0</span></em><a class="headerlink" href="#channel_access.server.cas.ExistsResponse.EXISTS_HERE" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt id="channel_access.server.cas.ExistsResponse.NOT_EXISTS_HERE">
-<code class="sig-name descname">NOT_EXISTS_HERE</code><em class="property"> = 1</em><a class="headerlink" href="#channel_access.server.cas.ExistsResponse.NOT_EXISTS_HERE" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">NOT_EXISTS_HERE</span></code><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#channel_access.server.cas.ExistsResponse.NOT_EXISTS_HERE" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt id="channel_access.server.cas.AttachResponse">
-<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.cas.</code><code class="sig-name descname">AttachResponse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AttachResponse" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.cas.</span></code><code class="sig-name descname"><span class="pre">AttachResponse</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AttachResponse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return value for the <a class="reference internal" href="#channel_access.server.cas.Server.pvAttach" title="channel_access.server.cas.Server.pvAttach"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Server.pvAttach()</span></code></a> method.</p>
 <dl class="py attribute">
 <dt id="channel_access.server.cas.AttachResponse.NOT_FOUND">
-<code class="sig-name descname">NOT_FOUND</code><em class="property"> = 34340866</em><a class="headerlink" href="#channel_access.server.cas.AttachResponse.NOT_FOUND" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">NOT_FOUND</span></code><em class="property"> <span class="pre">=</span> <span class="pre">34340866</span></em><a class="headerlink" href="#channel_access.server.cas.AttachResponse.NOT_FOUND" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt id="channel_access.server.cas.AttachResponse.NO_MEMORY">
-<code class="sig-name descname">NO_MEMORY</code><em class="property"> = 34340865</em><a class="headerlink" href="#channel_access.server.cas.AttachResponse.NO_MEMORY" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">NO_MEMORY</span></code><em class="property"> <span class="pre">=</span> <span class="pre">34340865</span></em><a class="headerlink" href="#channel_access.server.cas.AttachResponse.NO_MEMORY" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt id="channel_access.server.cas.Server">
-<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.cas.</code><code class="sig-name descname">Server</code><a class="headerlink" href="#channel_access.server.cas.Server" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.cas.</span></code><code class="sig-name descname"><span class="pre">Server</span></code><a class="headerlink" href="#channel_access.server.cas.Server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Server class.</p>
 <p>This class handles requests for PV connections.</p>
 <p>When creating a channel access server a user defined class should derive
@@ -79,7 +78,7 @@ from this class and implement the methods <a class="reference internal" href="#c
 must be taken when implementing the above methods.</p>
 <dl class="py method">
 <dt id="channel_access.server.cas.Server.pvAttach">
-<code class="sig-name descname">pvAttach</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.Server.pvAttach" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">pvAttach</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.Server.pvAttach" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a PV handler object for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
 <p>This method is called from an unspecified thread when a channel is
 created by a client.</p>
@@ -98,7 +97,7 @@ could not be created or a <a class="reference internal" href="#channel_access.se
 
 <dl class="py method">
 <dt id="channel_access.server.cas.Server.pvExistTest">
-<code class="sig-name descname">pvExistTest</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">address</span></em>, <em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.Server.pvExistTest" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">pvExistTest</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.Server.pvExistTest" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return wether/where the PV <code class="docutils literal notranslate"><span class="pre">name</span></code> exists.</p>
 <p>This method is called from an unspecified thread when a search request is
 received.</p>
@@ -121,7 +120,7 @@ tuple <code class="docutils literal notranslate"><span class="pre">(ip,</span> <
 
 <dl class="py class">
 <dt id="channel_access.server.cas.PV">
-<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.cas.</code><code class="sig-name descname">PV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.cas.</span></code><code class="sig-name descname"><span class="pre">PV</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV" title="Permalink to this definition">¶</a></dt>
 <dd><p>PV handler class.</p>
 <p>A user defined class should derive from this class and override
 the appropiate methods to inform the server about the properties
@@ -187,7 +186,7 @@ main name.</p>
 </dl>
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.count">
-<code class="sig-name descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.count" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">count</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the number of elements.</p>
 <p>This is called from the server when the number of elements is needed for
 an array pv.
@@ -205,7 +204,7 @@ Return <code class="docutils literal notranslate"><span class="pre">None</span><
 
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.destroy">
-<code class="sig-name descname">destroy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.destroy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">destroy</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.destroy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy the PV.</p>
 <p>Request from the server when the PV handler object is no longer
 needed.</p>
@@ -214,7 +213,7 @@ needed.</p>
 
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.interestDelete">
-<code class="sig-name descname">interestDelete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.interestDelete" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">interestDelete</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.interestDelete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Don’t inform server about changes any more.</p>
 <p>Request from the server that events should not be posted any more
 when attributes change.</p>
@@ -223,7 +222,7 @@ when attributes change.</p>
 
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.interestRegister">
-<code class="sig-name descname">interestRegister</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.interestRegister" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">interestRegister</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.interestRegister" title="Permalink to this definition">¶</a></dt>
 <dd><p>Request to inform the server about changes.</p>
 <p>Request from the server that events should be posted
 when attributes change, see <code class="xref py py-meth docutils literal notranslate"><span class="pre">postEvents()</span></code>.</p>
@@ -240,7 +239,7 @@ when attributes change, see <code class="xref py py-meth docutils literal notran
 
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.name">
-<code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.name" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">name</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the name of the PV. This is the name used on-the-wire, possible
 encoded with some text encoding.</p>
 <p>This method is thread-safe.</p>
@@ -256,7 +255,7 @@ encoded with some text encoding.</p>
 
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.postEvent">
-<code class="sig-name descname">postEvent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_mask</span></em>, <em class="sig-param"><span class="n">attributes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.postEvent" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">postEvent</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attributes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.postEvent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Post events to clients.</p>
 <p>This should be called when any attributes change and events are requested
 (<a class="reference internal" href="#channel_access.server.cas.PV.interestRegister" title="channel_access.server.cas.PV.interestRegister"><code class="xref py py-meth docutils literal notranslate"><span class="pre">interestRegister()</span></code></a>). Depending on which attributes changed the
@@ -275,7 +274,7 @@ the events to post.</p></li>
 
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.read" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">read</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retreive the attributes of the PV.</p>
 <p>This is called from the server when a get request is processed.</p>
 <p>This is called from an unspecified thread.</p>
@@ -294,7 +293,7 @@ the events to post.</p></li>
 
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.type">
-<code class="sig-name descname">type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.type" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">type</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the type of the PV.</p>
 <p>This is called from the server when the PV type is needed.</p>
 <p>This is called from an unspecified thread.</p>
@@ -310,7 +309,7 @@ the events to post.</p></li>
 
 <dl class="py method">
 <dt id="channel_access.server.cas.PV.write">
-<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">timestamp</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.write" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">write</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.PV.write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the value of the PV.</p>
 <p>This is called from the server when a put request is processed.</p>
 <p>This is called from an unspecified thread.</p>
@@ -333,7 +332,7 @@ the events to post.</p></li>
 
 <dl class="py attribute">
 <dt id="channel_access.server.cas.PV.use_numpy">
-<code class="sig-name descname">use_numpy</code><a class="headerlink" href="#channel_access.server.cas.PV.use_numpy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">use_numpy</span></code><a class="headerlink" href="#channel_access.server.cas.PV.use_numpy" title="Permalink to this definition">¶</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if numpy arrays are used, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
 <p>This can be changed any time. For any new request the new value is used
 when processing the value attribute.</p>
@@ -348,7 +347,7 @@ when processing the value attribute.</p>
 
 <dl class="py class">
 <dt id="channel_access.server.cas.AsyncRead">
-<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.cas.</code><code class="sig-name descname">AsyncRead</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncRead" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.cas.</span></code><code class="sig-name descname"><span class="pre">AsyncRead</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncRead" title="Permalink to this definition">¶</a></dt>
 <dd><p>Asynchronous read completion class.</p>
 <p>Return an object of this class from the <a class="reference internal" href="#channel_access.server.cas.PV.read" title="channel_access.server.cas.PV.read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">PV.read()</span></code></a> to
 signal an asynchronous read. Then call <a class="reference internal" href="#channel_access.server.cas.AsyncRead.complete" title="channel_access.server.cas.AsyncRead.complete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">complete()</span></code></a> or
@@ -360,7 +359,7 @@ signal an asynchronous read. Then call <a class="reference internal" href="#chan
 </dl>
 <dl class="py method">
 <dt id="channel_access.server.cas.AsyncRead.complete">
-<code class="sig-name descname">complete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attributes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncRead.complete" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">complete</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attributes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncRead.complete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Signal the successful completion of the asynchronous read.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -371,7 +370,7 @@ signal an asynchronous read. Then call <a class="reference internal" href="#chan
 
 <dl class="py method">
 <dt id="channel_access.server.cas.AsyncRead.fail">
-<code class="sig-name descname">fail</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncRead.fail" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">fail</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncRead.fail" title="Permalink to this definition">¶</a></dt>
 <dd><p>Signal a failure in completing the asynchronous read.</p>
 </dd></dl>
 
@@ -379,7 +378,7 @@ signal an asynchronous read. Then call <a class="reference internal" href="#chan
 
 <dl class="py class">
 <dt id="channel_access.server.cas.AsyncWrite">
-<em class="property">class </em><code class="sig-prename descclassname">channel_access.server.cas.</code><code class="sig-name descname">AsyncWrite</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncWrite" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.cas.</span></code><code class="sig-name descname"><span class="pre">AsyncWrite</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncWrite" title="Permalink to this definition">¶</a></dt>
 <dd><p>Asynchronous write completion class.</p>
 <p>Return an object of this class from the <a class="reference internal" href="#channel_access.server.cas.PV.write" title="channel_access.server.cas.PV.write"><code class="xref py py-meth docutils literal notranslate"><span class="pre">PV.write()</span></code></a> to
 signal an asynchronous write. Then call <a class="reference internal" href="#channel_access.server.cas.AsyncWrite.complete" title="channel_access.server.cas.AsyncWrite.complete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">complete()</span></code></a> or
@@ -391,13 +390,13 @@ signal an asynchronous write. Then call <a class="reference internal" href="#cha
 </dl>
 <dl class="py method">
 <dt id="channel_access.server.cas.AsyncWrite.complete">
-<code class="sig-name descname">complete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncWrite.complete" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">complete</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncWrite.complete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Signal the successful completion of the asynchronous write.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="channel_access.server.cas.AsyncWrite.fail">
-<code class="sig-name descname">fail</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncWrite.fail" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">fail</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.AsyncWrite.fail" title="Permalink to this definition">¶</a></dt>
 <dd><p>Signal a failure in completing the asynchronous write.</p>
 </dd></dl>
 
@@ -405,7 +404,7 @@ signal an asynchronous write. Then call <a class="reference internal" href="#cha
 
 <dl class="py function">
 <dt id="channel_access.server.cas.process">
-<code class="sig-prename descclassname">channel_access.server.cas.</code><code class="sig-name descname">process</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">timeout</span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.process" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">channel_access.server.cas.</span></code><code class="sig-name descname"><span class="pre">process</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#channel_access.server.cas.process" title="Permalink to this definition">¶</a></dt>
 <dd><p>Process server io for at most <code class="docutils literal notranslate"><span class="pre">timeout</span></code> seconds.</p>
 </dd></dl>
 
@@ -479,7 +478,7 @@ signal an asynchronous write. Then call <a class="reference internal" href="#cha
       
       
       
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
