@@ -36,7 +36,7 @@ PyTypeObject async_context_type = {
     sizeof(AsyncContext),                      /* tp_basicsize */
     0,                                         /* tp_itemsize */
     async_context_dealloc,                     /* tp_dealloc */
-    nullptr,                                   /* tp_print */
+    0,                                         /* tp_vectorcall_offset */
     nullptr,                                   /* tp_getattr */
     nullptr,                                   /* tp_setattr */
     nullptr,                                   /* tp_as_async */
@@ -211,7 +211,7 @@ PyTypeObject async_write_type = {
     sizeof(AsyncWrite),                        /* tp_basicsize */
     0,                                         /* tp_itemsize */
     async_write_dealloc,                       /* tp_dealloc */
-    nullptr,                                   /* tp_print */
+    0,                                         /* tp_vectorcall_offset */
     nullptr,                                   /* tp_getattr */
     nullptr,                                   /* tp_setattr */
     nullptr,                                   /* tp_as_async */
@@ -416,7 +416,7 @@ PyTypeObject async_read_type = {
     sizeof(AsyncRead),                         /* tp_basicsize */
     0,                                         /* tp_itemsize */
     async_read_dealloc,                        /* tp_dealloc */
-    nullptr,                                   /* tp_print */
+    0,                                         /* tp_vectorcall_offset */
     nullptr,                                   /* tp_getattr */
     nullptr,                                   /* tp_setattr */
     nullptr,                                   /* tp_as_async */
