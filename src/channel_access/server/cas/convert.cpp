@@ -234,7 +234,9 @@ bool read_value_impl(PyObject* value, aitEnum type, gdd& result)
             PyObject* item = PySequence_GetItem(value, i);
             if (not item) return false;
 
-            if (not py_convert(item, data[i])) return false;
+            bool res = py_convert(item, data[i]);
+            Py_DECREF(item);
+            if (not res) return false;
         }
     }
 
