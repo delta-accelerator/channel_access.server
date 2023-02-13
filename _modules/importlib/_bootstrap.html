@@ -1,17 +1,19 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>importlib._bootstrap &#8212; Channel Access server library</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -53,12 +55,25 @@
 <span class="c1"># reference any injected objects! This includes not only global code but also</span>
 <span class="c1"># anything specified at the class level.</span>
 
+<span class="k">def</span> <span class="nf">_object_name</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__qualname__</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span>
+
 <span class="c1"># Bootstrap-related code ######################################################</span>
 
+<span class="c1"># Modules injected manually by _setup()</span>
+<span class="n">_thread</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_warnings</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_weakref</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="c1"># Import done by _install_external_importers()</span>
 <span class="n">_bootstrap_external</span> <span class="o">=</span> <span class="kc">None</span>
 
+
 <span class="k">def</span> <span class="nf">_wrap</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Simple substitute for functools.update_wrapper.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simple substitute for functools.update_wrapper.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">replace</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;__module__&#39;</span><span class="p">,</span> <span class="s1">&#39;__name__&#39;</span><span class="p">,</span> <span class="s1">&#39;__qualname__&#39;</span><span class="p">,</span> <span class="s1">&#39;__doc__&#39;</span><span class="p">]:</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">replace</span><span class="p">):</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">replace</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">replace</span><span class="p">))</span>
@@ -83,7 +98,7 @@
 
 
 <span class="k">class</span> <span class="nc">_ModuleLock</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;A recursive lock implementation which is able to detect deadlocks</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A recursive lock implementation which is able to detect deadlocks</span>
 <span class="sd">    (e.g. thread 1 trying to take locks A then B, and thread 2 trying to</span>
 <span class="sd">    take locks B then A).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -118,7 +133,7 @@
             <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tid</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Acquire the module lock.  If a potential deadlock is detected,</span>
 <span class="sd">        a _DeadlockError is raised.</span>
 <span class="sd">        Otherwise, the lock is always acquired and True is returned.</span>
@@ -160,7 +175,7 @@
 
 
 <span class="k">class</span> <span class="nc">_DummyModuleLock</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;A simple _ModuleLock equivalent for Python builds without</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A simple _ModuleLock equivalent for Python builds without</span>
 <span class="sd">    multi-threading support.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
@@ -197,7 +212,7 @@
 <span class="c1"># The following two functions are for consumption by Python/import.c.</span>
 
 <span class="k">def</span> <span class="nf">_get_module_lock</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get or create the module lock for a given module name.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get or create the module lock for a given module name.</span>
 
 <span class="sd">    Acquire/release internally the global import lock to protect</span>
 <span class="sd">    _module_locks.&quot;&quot;&quot;</span>
@@ -234,7 +249,7 @@
 
 
 <span class="k">def</span> <span class="nf">_lock_unlock_module</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Acquires then releases the module lock for a given module name.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Acquires then releases the module lock for a given module name.</span>
 
 <span class="sd">    This is used to ensure a module is completely initialized, in the</span>
 <span class="sd">    event it is being imported by another thread.</span>
@@ -251,7 +266,7 @@
 
 <span class="c1"># Frame stripping magic ###############################################</span>
 <span class="k">def</span> <span class="nf">_call_with_frames_removed</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;remove_importlib_frames in import.c will always remove sequences</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;remove_importlib_frames in import.c will always remove sequences</span>
 <span class="sd">    of importlib frames that end with a call to this function</span>
 
 <span class="sd">    Use it instead of a normal call in places where including the importlib</span>
@@ -262,7 +277,7 @@
 
 
 <span class="k">def</span> <span class="nf">_verbose_message</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Print the message to stderr if -v/PYTHONVERBOSE is turned on.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print the message to stderr if -v/PYTHONVERBOSE is turned on.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="n">verbosity</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">message</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;import &#39;</span><span class="p">)):</span>
             <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;# &#39;</span> <span class="o">+</span> <span class="n">message</span>
@@ -270,7 +285,7 @@
 
 
 <span class="k">def</span> <span class="nf">_requires_builtin</span><span class="p">(</span><span class="n">fxn</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Decorator to verify the named module is built-in.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to verify the named module is built-in.&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">_requires_builtin_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">fullname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">builtin_module_names</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{!r}</span><span class="s1"> is not a built-in module&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fullname</span><span class="p">),</span>
@@ -281,7 +296,7 @@
 
 
 <span class="k">def</span> <span class="nf">_requires_frozen</span><span class="p">(</span><span class="n">fxn</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Decorator to verify the named module is frozen.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to verify the named module is frozen.&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">_requires_frozen_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_imp</span><span class="o">.</span><span class="n">is_frozen</span><span class="p">(</span><span class="n">fullname</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{!r}</span><span class="s1"> is not a frozen module&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fullname</span><span class="p">),</span>
@@ -293,11 +308,14 @@
 
 <span class="c1"># Typically used by loader classes as a method replacement.</span>
 <span class="k">def</span> <span class="nf">_load_module_shim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Load the specified module into sys.modules and return it.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the specified module into sys.modules and return it.</span>
 
-<span class="sd">    This method is deprecated.  Use loader.exec_module instead.</span>
+<span class="sd">    This method is deprecated.  Use loader.exec_module() instead.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;the load_module() method is deprecated and slated for removal in &quot;</span>
+          <span class="s2">&quot;Python 3.12; use exec_module() instead&quot;</span><span class="p">)</span>
+    <span class="n">_warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">spec_from_loader</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">fullname</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">fullname</span><span class="p">]</span>
@@ -309,26 +327,16 @@
 <span class="c1"># Module specifications #######################################################</span>
 
 <span class="k">def</span> <span class="nf">_module_repr</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
-    <span class="c1"># The implementation of ModuleType.__repr__().</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The implementation of ModuleType.__repr__().&quot;&quot;&quot;</span>
     <span class="n">loader</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s1">&#39;__loader__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="s1">&#39;module_repr&#39;</span><span class="p">):</span>
-        <span class="c1"># As soon as BuiltinImporter, FrozenImporter, and NamespaceLoader</span>
-        <span class="c1"># drop their implementations for module_repr. we can add a</span>
-        <span class="c1"># deprecation warning here.</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;__spec__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_module_repr_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="s1">&#39;module_repr&#39;</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">module_repr</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">pass</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">spec</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">__spec__</span>
-    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">_module_repr_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-
-    <span class="c1"># We could use module.__class__.__name__ instead of &#39;module&#39; in the</span>
-    <span class="c1"># various repr permutations.</span>
+    <span class="c1"># Fall through to a catch-all which always succeeds.</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="vm">__name__</span>
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -345,7 +353,7 @@
 
 
 <span class="k">class</span> <span class="nc">ModuleSpec</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;The specification for a module, used for loading.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The specification for a module, used for loading.</span>
 
 <span class="sd">    A module&#39;s spec is the source for information about the module.  For</span>
 <span class="sd">    data associated with the module, including source, use the spec&#39;s</span>
@@ -430,7 +438,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The name of the module&#39;s parent.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The name of the module&#39;s parent.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submodule_search_locations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
@@ -446,7 +454,7 @@
 
 
 <span class="k">def</span> <span class="nf">spec_from_loader</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">loader</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_package</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return a module spec based on various loader methods.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a module spec based on various loader methods.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="s1">&#39;get_filename&#39;</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">_bootstrap_external</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
@@ -589,7 +597,7 @@
 
 
 <span class="k">def</span> <span class="nf">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a module based on the provided spec.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a module based on the provided spec.&quot;&quot;&quot;</span>
     <span class="c1"># Typically loaders will not implement create_module().</span>
     <span class="n">module</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="p">,</span> <span class="s1">&#39;create_module&#39;</span><span class="p">):</span>
@@ -606,7 +614,7 @@
 
 
 <span class="k">def</span> <span class="nf">_module_repr_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return the repr to use for the module.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the repr to use for the module.&quot;&quot;&quot;</span>
     <span class="c1"># We mostly replicate _module_repr() using the spec attributes.</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span>
     <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">origin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -623,7 +631,7 @@
 
 <span class="c1"># Used by importlib.reload() and _load_module_shim().</span>
 <span class="k">def</span> <span class="nf">_exec</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">module</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Execute the spec&#39;s specified module in an existing module&#39;s namespace.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the spec&#39;s specified module in an existing module&#39;s namespace.&quot;&quot;&quot;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span>
     <span class="k">with</span> <span class="n">_ModuleLockManager</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">module</span><span class="p">:</span>
@@ -638,9 +646,9 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_init_module_attrs</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">override</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="p">,</span> <span class="s1">&#39;exec_module&#39;</span><span class="p">):</span>
-                    <span class="c1"># (issue19713) Once BuiltinImporter and ExtensionFileLoader</span>
-                    <span class="c1"># have exec_module() implemented, we can add a deprecation</span>
-                    <span class="c1"># warning here.</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_object_name</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="p">)</span><span class="si">}</span><span class="s2">.exec_module() not found; &quot;</span>
+                           <span class="s2">&quot;falling back to load_module()&quot;</span><span class="p">)</span>
+                    <span class="n">_warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">ImportWarning</span><span class="p">)</span>
                     <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">load_module</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">exec_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
@@ -653,9 +661,8 @@
 
 
 <span class="k">def</span> <span class="nf">_load_backward_compatible</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
-    <span class="c1"># (issue19713) Once BuiltinImporter and ExtensionFileLoader</span>
-    <span class="c1"># have exec_module() implemented, we can add a deprecation</span>
-    <span class="c1"># warning here.</span>
+    <span class="c1"># It is assumed that all callers have been warned about using load_module()</span>
+    <span class="c1"># appropriately before calling this function.</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">load_module</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
     <span class="k">except</span><span class="p">:</span>
@@ -694,6 +701,9 @@
     <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># Not a namespace package.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="p">,</span> <span class="s1">&#39;exec_module&#39;</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_object_name</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="p">)</span><span class="si">}</span><span class="s2">.exec_module() not found; &quot;</span>
+                    <span class="s2">&quot;falling back to load_module()&quot;</span><span class="p">)</span>
+            <span class="n">_warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">ImportWarning</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">_load_backward_compatible</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
 
     <span class="n">module</span> <span class="o">=</span> <span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
@@ -732,7 +742,7 @@
 <span class="c1"># A method used during testing of _load_unlocked() and by</span>
 <span class="c1"># _load_module_shim().</span>
 <span class="k">def</span> <span class="nf">_load</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return a new module object, loaded by the spec&#39;s loader.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new module object, loaded by the spec&#39;s loader.</span>
 
 <span class="sd">    The module is not added to its parent.</span>
 
@@ -748,7 +758,7 @@
 
 <span class="k">class</span> <span class="nc">BuiltinImporter</span><span class="p">:</span>
 
-    <span class="sd">&quot;&quot;&quot;Meta path import for built-in modules.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Meta path import for built-in modules.</span>
 
 <span class="sd">    All methods are either class or static methods to avoid the need to</span>
 <span class="sd">    instantiate the class.</span>
@@ -759,11 +769,13 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">module_repr</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return repr for the module.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return repr for the module.</span>
 
 <span class="sd">        The method is deprecated.  The import machinery does the job itself.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;BuiltinImporter.module_repr() is deprecated and &quot;</span>
+                       <span class="s2">&quot;slated for removal in Python 3.12&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&lt;module </span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="vm">__name__</span><span class="si">!r}</span><span class="s1"> (</span><span class="si">{</span><span class="n">BuiltinImporter</span><span class="o">.</span><span class="n">_ORIGIN</span><span class="si">}</span><span class="s1">)&gt;&#39;</span>
 
     <span class="nd">@classmethod</span>
@@ -777,45 +789,48 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">find_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Find the built-in module.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the built-in module.</span>
 
 <span class="sd">        If &#39;path&#39; is ever specified then the search is considered a failure.</span>
 
 <span class="sd">        This method is deprecated.  Use find_spec() instead.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;BuiltinImporter.find_module() is deprecated and &quot;</span>
+                       <span class="s2">&quot;slated for removal in Python 3.12; use find_spec() instead&quot;</span><span class="p">,</span>
+                       <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span> <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">create_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create a built-in module&quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create_module</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a built-in module&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">builtin_module_names</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{!r}</span><span class="s1"> is not a built-in module&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
                               <span class="n">name</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_call_with_frames_removed</span><span class="p">(</span><span class="n">_imp</span><span class="o">.</span><span class="n">create_builtin</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">exec_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Exec a built-in module&quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">exec_module</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Exec a built-in module&quot;&quot;&quot;</span>
         <span class="n">_call_with_frames_removed</span><span class="p">(</span><span class="n">_imp</span><span class="o">.</span><span class="n">exec_builtin</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@_requires_builtin</span>
     <span class="k">def</span> <span class="nf">get_code</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return None as built-in modules do not have code objects.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return None as built-in modules do not have code objects.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@_requires_builtin</span>
     <span class="k">def</span> <span class="nf">get_source</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return None as built-in modules do not have source code.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return None as built-in modules do not have source code.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@_requires_builtin</span>
     <span class="k">def</span> <span class="nf">is_package</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return False as built-in modules are never packages.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return False as built-in modules are never packages.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="n">load_module</span> <span class="o">=</span> <span class="nb">classmethod</span><span class="p">(</span><span class="n">_load_module_shim</span><span class="p">)</span>
@@ -823,7 +838,7 @@
 
 <span class="k">class</span> <span class="nc">FrozenImporter</span><span class="p">:</span>
 
-    <span class="sd">&quot;&quot;&quot;Meta path import for frozen modules.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Meta path import for frozen modules.</span>
 
 <span class="sd">    All methods are either class or static methods to avoid the need to</span>
 <span class="sd">    instantiate the class.</span>
@@ -834,11 +849,13 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">module_repr</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return repr for the module.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return repr for the module.</span>
 
 <span class="sd">        The method is deprecated.  The import machinery does the job itself.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;FrozenImporter.module_repr() is deprecated and &quot;</span>
+                       <span class="s2">&quot;slated for removal in Python 3.12&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="k">return</span> <span class="s1">&#39;&lt;module </span><span class="si">{!r}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">)&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">FrozenImporter</span><span class="o">.</span><span class="n">_ORIGIN</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
@@ -850,16 +867,19 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">find_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Find a frozen module.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find a frozen module.</span>
 
 <span class="sd">        This method is deprecated.  Use find_spec() instead.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;FrozenImporter.find_module() is deprecated and &quot;</span>
+                       <span class="s2">&quot;slated for removal in Python 3.12; use find_spec() instead&quot;</span><span class="p">,</span>
+                       <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span> <span class="k">if</span> <span class="n">_imp</span><span class="o">.</span><span class="n">is_frozen</span><span class="p">(</span><span class="n">fullname</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">create_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Use default semantics for module creation.&quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create_module</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Use default semantics for module creation.&quot;&quot;&quot;</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">exec_module</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
@@ -872,29 +892,30 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">load_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load a frozen module.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a frozen module.</span>
 
 <span class="sd">        This method is deprecated.  Use exec_module() instead.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Warning about deprecation implemented in _load_module_shim().</span>
         <span class="k">return</span> <span class="n">_load_module_shim</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@_requires_frozen</span>
     <span class="k">def</span> <span class="nf">get_code</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the code object for the frozen module.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the code object for the frozen module.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">_imp</span><span class="o">.</span><span class="n">get_frozen_object</span><span class="p">(</span><span class="n">fullname</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@_requires_frozen</span>
     <span class="k">def</span> <span class="nf">get_source</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return None as frozen modules do not have source code.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return None as frozen modules do not have source code.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@_requires_frozen</span>
     <span class="k">def</span> <span class="nf">is_package</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return True if the frozen module is a package.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if the frozen module is a package.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">_imp</span><span class="o">.</span><span class="n">is_frozen_package</span><span class="p">(</span><span class="n">fullname</span><span class="p">)</span>
 
 
@@ -902,19 +923,19 @@
 
 <span class="k">class</span> <span class="nc">_ImportLockContext</span><span class="p">:</span>
 
-    <span class="sd">&quot;&quot;&quot;Context manager for the import lock.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Context manager for the import lock.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Acquire the import lock.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Acquire the import lock.&quot;&quot;&quot;</span>
         <span class="n">_imp</span><span class="o">.</span><span class="n">acquire_lock</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">exc_traceback</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Release the import lock regardless of any raised exceptions.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Release the import lock regardless of any raised exceptions.&quot;&quot;&quot;</span>
         <span class="n">_imp</span><span class="o">.</span><span class="n">release_lock</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">_resolve_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">package</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Resolve a relative module name to an absolute one.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve a relative module name to an absolute one.&quot;&quot;&quot;</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="n">package</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">level</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;attempted relative import beyond top-level package&#39;</span><span class="p">)</span>
@@ -923,8 +944,9 @@
 
 
 <span class="k">def</span> <span class="nf">_find_spec_legacy</span><span class="p">(</span><span class="n">finder</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-    <span class="c1"># This would be a good place for a DeprecationWarning if</span>
-    <span class="c1"># we ended up going that route.</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_object_name</span><span class="p">(</span><span class="n">finder</span><span class="p">)</span><span class="si">}</span><span class="s2">.find_spec() not found; &quot;</span>
+                           <span class="s2">&quot;falling back to find_module()&quot;</span><span class="p">)</span>
+    <span class="n">_warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">ImportWarning</span><span class="p">)</span>
     <span class="n">loader</span> <span class="o">=</span> <span class="n">finder</span><span class="o">.</span><span class="n">find_module</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">loader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -932,7 +954,7 @@
 
 
 <span class="k">def</span> <span class="nf">_find_spec</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Find a module&#39;s spec.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find a module&#39;s spec.&quot;&quot;&quot;</span>
     <span class="n">meta_path</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">meta_path</span>
     <span class="k">if</span> <span class="n">meta_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># PyImport_Cleanup() is running or has been called.</span>
@@ -979,7 +1001,7 @@
 
 
 <span class="k">def</span> <span class="nf">_sanity_check</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">package</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Verify arguments are &quot;sane&quot;.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify arguments are &quot;sane&quot;.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;module name must be str, not </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
     <span class="k">if</span> <span class="n">level</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -1033,7 +1055,7 @@
 
 
 <span class="k">def</span> <span class="nf">_find_and_load</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">import_</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Find and load the module.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find and load the module.&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="n">_ModuleLockManager</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">_NEEDS_LOADING</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">module</span> <span class="ow">is</span> <span class="n">_NEEDS_LOADING</span><span class="p">:</span>
@@ -1049,7 +1071,7 @@
 
 
 <span class="k">def</span> <span class="nf">_gcd_import</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Import and return the module based on its name, the package the call is</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Import and return the module based on its name, the package the call is</span>
 <span class="sd">    being made from, and the level adjustment.</span>
 
 <span class="sd">    This function represents the greatest common denominator of functionality</span>
@@ -1064,7 +1086,7 @@
 
 
 <span class="k">def</span> <span class="nf">_handle_fromlist</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">fromlist</span><span class="p">,</span> <span class="n">import_</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Figure out what __import__ should return.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Figure out what __import__ should return.</span>
 
 <span class="sd">    The import_ parameter is a callable which takes the name of module to</span>
 <span class="sd">    import. It is required to decouple the function from assuming importlib&#39;s</span>
@@ -1101,7 +1123,7 @@
 
 
 <span class="k">def</span> <span class="nf">_calc___package__</span><span class="p">(</span><span class="nb">globals</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Calculate what __package__ should be.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate what __package__ should be.</span>
 
 <span class="sd">    __package__ is not guaranteed to be defined or could be set to None</span>
 <span class="sd">    to represent that its proper value is unknown.</span>
@@ -1128,7 +1150,7 @@
 
 
 <span class="k">def</span> <span class="nf">__import__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">globals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">locals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fromlist</span><span class="o">=</span><span class="p">(),</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Import a module.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Import a module.</span>
 
 <span class="sd">    The &#39;globals&#39; argument is used to infer where the import is occurring from</span>
 <span class="sd">    to handle relative imports. The &#39;locals&#39; argument is ignored. The</span>
@@ -1172,7 +1194,7 @@
 
 
 <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="n">sys_module</span><span class="p">,</span> <span class="n">_imp_module</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Setup importlib by importing needed built-in modules and injecting them</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Setup importlib by importing needed built-in modules and injecting them</span>
 <span class="sd">    into the global namespace.</span>
 
 <span class="sd">    As sys is needed for sys.modules access and _imp is needed to load built-in</span>
@@ -1207,7 +1229,7 @@
 
 
 <span class="k">def</span> <span class="nf">_install</span><span class="p">(</span><span class="n">sys_module</span><span class="p">,</span> <span class="n">_imp_module</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Install importers for builtin and frozen modules&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Install importers for builtin and frozen modules&quot;&quot;&quot;</span>
     <span class="n">_setup</span><span class="p">(</span><span class="n">sys_module</span><span class="p">,</span> <span class="n">_imp_module</span><span class="p">)</span>
 
     <span class="n">sys</span><span class="o">.</span><span class="n">meta_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BuiltinImporter</span><span class="p">)</span>
@@ -1215,7 +1237,7 @@
 
 
 <span class="k">def</span> <span class="nf">_install_external_importers</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Install importers that require external filesystem access&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Install importers that require external filesystem access&quot;&quot;&quot;</span>
     <span class="k">global</span> <span class="n">_bootstrap_external</span>
     <span class="kn">import</span> <span class="nn">_frozen_importlib_external</span>
     <span class="n">_bootstrap_external</span> <span class="o">=</span> <span class="n">_frozen_importlib_external</span>
@@ -1263,12 +1285,12 @@
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1277,8 +1299,8 @@
       
       
       
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
 

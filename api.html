@@ -1,17 +1,20 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
     <title>API Reference &#8212; Channel Access server library</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="High-level thread-safe interface" href="server.html" />
@@ -32,15 +35,105 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="api-reference">
-<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="server.html">High-level thread-safe interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="server.cas.html">Low-level cas binding</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">High-level thread-safe interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="server.html#channel_access.server.AsyncRead"><code class="docutils literal notranslate"><span class="pre">AsyncRead</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.AsyncRead.complete"><code class="docutils literal notranslate"><span class="pre">AsyncRead.complete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.AsyncRead.fail"><code class="docutils literal notranslate"><span class="pre">AsyncRead.fail()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#channel_access.server.AsyncWrite"><code class="docutils literal notranslate"><span class="pre">AsyncWrite</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.AsyncWrite.complete"><code class="docutils literal notranslate"><span class="pre">AsyncWrite.complete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.AsyncWrite.fail"><code class="docutils literal notranslate"><span class="pre">AsyncWrite.fail()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#channel_access.server.PV"><code class="docutils literal notranslate"><span class="pre">PV</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.alarm_limits"><code class="docutils literal notranslate"><span class="pre">PV.alarm_limits</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.attributes"><code class="docutils literal notranslate"><span class="pre">PV.attributes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.control_limits"><code class="docutils literal notranslate"><span class="pre">PV.control_limits</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.count"><code class="docutils literal notranslate"><span class="pre">PV.count</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.display_limits"><code class="docutils literal notranslate"><span class="pre">PV.display_limits</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.enum_strings"><code class="docutils literal notranslate"><span class="pre">PV.enum_strings</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.is_array"><code class="docutils literal notranslate"><span class="pre">PV.is_array</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.is_enum"><code class="docutils literal notranslate"><span class="pre">PV.is_enum</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.monitor_handler"><code class="docutils literal notranslate"><span class="pre">PV.monitor_handler</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.name"><code class="docutils literal notranslate"><span class="pre">PV.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.precision"><code class="docutils literal notranslate"><span class="pre">PV.precision</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.severity"><code class="docutils literal notranslate"><span class="pre">PV.severity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.status"><code class="docutils literal notranslate"><span class="pre">PV.status</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.status_severity"><code class="docutils literal notranslate"><span class="pre">PV.status_severity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.timestamp"><code class="docutils literal notranslate"><span class="pre">PV.timestamp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.type"><code class="docutils literal notranslate"><span class="pre">PV.type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.unit"><code class="docutils literal notranslate"><span class="pre">PV.unit</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.use_numpy"><code class="docutils literal notranslate"><span class="pre">PV.use_numpy</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.value"><code class="docutils literal notranslate"><span class="pre">PV.value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.value_timestamp"><code class="docutils literal notranslate"><span class="pre">PV.value_timestamp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.PV.warning_limits"><code class="docutils literal notranslate"><span class="pre">PV.warning_limits</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#channel_access.server.Server"><code class="docutils literal notranslate"><span class="pre">Server</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.Server.addAlias"><code class="docutils literal notranslate"><span class="pre">Server.addAlias()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.Server.createPV"><code class="docutils literal notranslate"><span class="pre">Server.createPV()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.Server.removeAlias"><code class="docutils literal notranslate"><span class="pre">Server.removeAlias()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.Server.retreivePV"><code class="docutils literal notranslate"><span class="pre">Server.retreivePV()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.Server.shutdown"><code class="docutils literal notranslate"><span class="pre">Server.shutdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.Server.aliases"><code class="docutils literal notranslate"><span class="pre">Server.aliases</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.html#channel_access.server.Server.pvs"><code class="docutils literal notranslate"><span class="pre">Server.pvs</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#channel_access.server.default_attributes"><code class="docutils literal notranslate"><span class="pre">default_attributes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#channel_access.server.failing_write_handler"><code class="docutils literal notranslate"><span class="pre">failing_write_handler()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#channel_access.server.is_sequence"><code class="docutils literal notranslate"><span class="pre">is_sequence()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="server.cas.html">Low-level cas binding</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="server.cas.html#channel_access.server.cas.ExistsResponse"><code class="docutils literal notranslate"><span class="pre">ExistsResponse</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.ExistsResponse.EXISTS_HERE"><code class="docutils literal notranslate"><span class="pre">ExistsResponse.EXISTS_HERE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.ExistsResponse.NOT_EXISTS_HERE"><code class="docutils literal notranslate"><span class="pre">ExistsResponse.NOT_EXISTS_HERE</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AttachResponse"><code class="docutils literal notranslate"><span class="pre">AttachResponse</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AttachResponse.NOT_FOUND"><code class="docutils literal notranslate"><span class="pre">AttachResponse.NOT_FOUND</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AttachResponse.NO_MEMORY"><code class="docutils literal notranslate"><span class="pre">AttachResponse.NO_MEMORY</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.cas.html#channel_access.server.cas.Server"><code class="docutils literal notranslate"><span class="pre">Server</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.Server.pvAttach"><code class="docutils literal notranslate"><span class="pre">Server.pvAttach()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.Server.pvExistTest"><code class="docutils literal notranslate"><span class="pre">Server.pvExistTest()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV"><code class="docutils literal notranslate"><span class="pre">PV</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.count"><code class="docutils literal notranslate"><span class="pre">PV.count()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.destroy"><code class="docutils literal notranslate"><span class="pre">PV.destroy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.interestDelete"><code class="docutils literal notranslate"><span class="pre">PV.interestDelete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.interestRegister"><code class="docutils literal notranslate"><span class="pre">PV.interestRegister()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.name"><code class="docutils literal notranslate"><span class="pre">PV.name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.postEvent"><code class="docutils literal notranslate"><span class="pre">PV.postEvent()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.read"><code class="docutils literal notranslate"><span class="pre">PV.read()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.type"><code class="docutils literal notranslate"><span class="pre">PV.type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.write"><code class="docutils literal notranslate"><span class="pre">PV.write()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.PV.use_numpy"><code class="docutils literal notranslate"><span class="pre">PV.use_numpy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AsyncRead"><code class="docutils literal notranslate"><span class="pre">AsyncRead</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AsyncRead.complete"><code class="docutils literal notranslate"><span class="pre">AsyncRead.complete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AsyncRead.fail"><code class="docutils literal notranslate"><span class="pre">AsyncRead.fail()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AsyncWrite"><code class="docutils literal notranslate"><span class="pre">AsyncWrite</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AsyncWrite.complete"><code class="docutils literal notranslate"><span class="pre">AsyncWrite.complete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="server.cas.html#channel_access.server.cas.AsyncWrite.fail"><code class="docutils literal notranslate"><span class="pre">AsyncWrite.fail()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.cas.html#channel_access.server.cas.process"><code class="docutils literal notranslate"><span class="pre">process()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </div>
-</div>
+</section>
 
 
           </div>
@@ -95,12 +188,12 @@
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -109,8 +202,8 @@
       
       
       
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
       <a href="_sources/api.rst.txt"

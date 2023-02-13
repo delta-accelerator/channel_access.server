@@ -1,17 +1,20 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
     <title>High-level thread-safe interface &#8212; Channel Access server library</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Low-level cas binding" href="server.cas.html" />
@@ -32,25 +35,25 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-channel_access.server">
-<span id="high-level-thread-safe-interface"></span><h1>High-level thread-safe interface<a class="headerlink" href="#module-channel_access.server" title="Permalink to this headline">¶</a></h1>
+  <section id="module-channel_access.server">
+<span id="high-level-thread-safe-interface"></span><h1>High-level thread-safe interface<a class="headerlink" href="#module-channel_access.server" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
-<dt id="channel_access.server.AsyncRead">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.</span></code><code class="sig-name descname"><span class="pre">AsyncRead</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncRead" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.AsyncRead">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">channel_access.server.</span></span><span class="sig-name descname"><span class="pre">AsyncRead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncRead" title="Permalink to this definition">¶</a></dt>
 <dd><p>Asyncronous read completion class.</p>
 <p>Create an object of this class in a read handler and return it
 to signal an asynchronous read operation.</p>
 <p>When the read operation is completed call the <a class="reference internal" href="#channel_access.server.AsyncRead.complete" title="channel_access.server.AsyncRead.complete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">complete()</span></code></a>
 method. If it fails call the <a class="reference internal" href="#channel_access.server.AsyncRead.fail" title="channel_access.server.AsyncRead.fail"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fail()</span></code></a> method.</p>
 <dl class="py method">
-<dt id="channel_access.server.AsyncRead.complete">
-<code class="sig-name descname"><span class="pre">complete</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attributes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncRead.complete" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.AsyncRead.complete">
+<span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attributes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncRead.complete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Complete the asynchronous read operation.</p>
 <p>This updates the PV object and signals the completion to the
 server.</p>
 <p>This method is thread-safe.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>attributes</strong> (<em>dict</em>) – An attributes dictionary with the read
 attributes.</p>
 </dd>
@@ -58,8 +61,8 @@ attributes.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="channel_access.server.AsyncRead.fail">
-<code class="sig-name descname"><span class="pre">fail</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead.fail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncRead.fail" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.AsyncRead.fail">
+<span class="sig-name descname"><span class="pre">fail</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncRead.fail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncRead.fail" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fail the asynchronous read operation.</p>
 <p>This signals a failure of the read operation to the server.</p>
 <p>This method is thread-safe.</p>
@@ -68,22 +71,22 @@ attributes.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="channel_access.server.AsyncWrite">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.</span></code><code class="sig-name descname"><span class="pre">AsyncWrite</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncWrite" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.AsyncWrite">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">channel_access.server.</span></span><span class="sig-name descname"><span class="pre">AsyncWrite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncWrite" title="Permalink to this definition">¶</a></dt>
 <dd><p>Asyncronous write completion class.</p>
 <p>Create an object of this class in a write handler and return it
 to signal an asynchronous write operation.</p>
 <p>When the write operation is completed call the <a class="reference internal" href="#channel_access.server.AsyncWrite.complete" title="channel_access.server.AsyncWrite.complete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">complete()</span></code></a>
 method. If it fails call the <a class="reference internal" href="#channel_access.server.AsyncWrite.fail" title="channel_access.server.AsyncWrite.fail"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fail()</span></code></a> method.</p>
 <dl class="py method">
-<dt id="channel_access.server.AsyncWrite.complete">
-<code class="sig-name descname"><span class="pre">complete</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncWrite.complete" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.AsyncWrite.complete">
+<span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncWrite.complete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Complete the asynchronous write operation.</p>
 <p>This updates the PV object and signals the completion to the
 server.</p>
 <p>This method is thread-safe.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> – The new value for the <em>value</em> attribute.</p></li>
 <li><p><strong>timestamp</strong> (<em>datetime</em>) – The new value for the <em>timestamp</em> attribute.</p></li>
@@ -93,8 +96,8 @@ server.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="channel_access.server.AsyncWrite.fail">
-<code class="sig-name descname"><span class="pre">fail</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite.fail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncWrite.fail" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.AsyncWrite.fail">
+<span class="sig-name descname"><span class="pre">fail</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#AsyncWrite.fail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.AsyncWrite.fail" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fail the asynchronous write operation.</p>
 <p>This signals a failure of the write operation to the server.</p>
 <p>This method is thread-safe.</p>
@@ -103,8 +106,8 @@ server.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="channel_access.server.PV">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.</span></code><code class="sig-name descname"><span class="pre">PV</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attributes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_deadband</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive_deadband</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'utf-8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numpy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#PV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.PV" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.PV">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">channel_access.server.</span></span><span class="sig-name descname"><span class="pre">PV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attributes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_deadband</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive_deadband</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'utf-8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numpy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#PV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.PV" title="Permalink to this definition">¶</a></dt>
 <dd><p>A channel access PV.</p>
 <p>This class gives thread-safe access to a channel access PV.
 Always create PV objects through <a class="reference internal" href="#channel_access.server.Server.createPV" title="channel_access.server.Server.createPV"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Server.createPV()</span></code></a>.</p>
@@ -201,18 +204,18 @@ It is called from an unspecified thread and should not block.</p>
 </dl>
 </div></blockquote>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str|bytes</em>) – Name of the PV.
+<li><p><strong>name</strong> (<em>str</em><em>|</em><em>bytes</em>) – Name of the PV.
 If <code class="docutils literal notranslate"><span class="pre">encoding</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> this must be raw bytes.</p></li>
 <li><p><strong>type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Type</span></code>) – The PV type.</p></li>
 <li><p><strong>count</strong> (<em>int</em>) – The initial array length. Use <code class="docutils literal notranslate"><span class="pre">None</span></code> for a scalar PV.</p></li>
 <li><p><strong>attributes</strong> (<em>dict</em>) – Attributes dictionary with the initial attributes.
 These will override the default attributes.</p></li>
-<li><p><strong>value_deadband</strong> (<em>int|float</em>) – If any value changes more than this
+<li><p><strong>value_deadband</strong> (<em>int</em><em>|</em><em>float</em>) – If any value changes more than this
 deadband a value event is fired.
 This is only used for numerical PVs.</p></li>
-<li><p><strong>archive_deadband</strong> (<em>int|float</em>) – If any value changes more than this
+<li><p><strong>archive_deadband</strong> (<em>int</em><em>|</em><em>float</em>) – If any value changes more than this
 deadband an archive event is fired.
 This is only used for numerical PVs.</p></li>
 <li><p><strong>read_handler</strong> (<em>callable</em>) – A callable used as the read handler
@@ -230,104 +233,104 @@ use numpy arrays if numpy support is available.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt id="channel_access.server.PV.alarm_limits">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">alarm_limits</span></code><a class="headerlink" href="#channel_access.server.PV.alarm_limits" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.alarm_limits">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">alarm_limits</span></span><a class="headerlink" href="#channel_access.server.PV.alarm_limits" title="Permalink to this definition">¶</a></dt>
 <dd><p>The alarm display limits.</p>
 <p>This is writeable and updates the alarm limits.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple(int|float, int|float)</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.attributes">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">attributes</span></code><a class="headerlink" href="#channel_access.server.PV.attributes" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.attributes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">attributes</span></span><a class="headerlink" href="#channel_access.server.PV.attributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current attributes dictionary</p>
 <p>This is writeable and updates the attributes dictionary</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.control_limits">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">control_limits</span></code><a class="headerlink" href="#channel_access.server.PV.control_limits" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.control_limits">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">control_limits</span></span><a class="headerlink" href="#channel_access.server.PV.control_limits" title="Permalink to this definition">¶</a></dt>
 <dd><p>The control display limits.</p>
 <p>This is writeable and updates the control display limits.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple(int|float, int|float)</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.count">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">count</span></code><a class="headerlink" href="#channel_access.server.PV.count" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.count">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count</span></span><a class="headerlink" href="#channel_access.server.PV.count" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of array elements of this PV or <code class="docutils literal notranslate"><span class="pre">None</span></code> for a scalar.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.display_limits">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">display_limits</span></code><a class="headerlink" href="#channel_access.server.PV.display_limits" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.display_limits">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">display_limits</span></span><a class="headerlink" href="#channel_access.server.PV.display_limits" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current display limits.</p>
 <p>This is writeable and updates the display limits:</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple(int|float, int|float)</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.enum_strings">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">enum_strings</span></code><a class="headerlink" href="#channel_access.server.PV.enum_strings" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.enum_strings">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">enum_strings</span></span><a class="headerlink" href="#channel_access.server.PV.enum_strings" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current enumeration strings.</p>
 <p>The type depends on the <code class="docutils literal notranslate"><span class="pre">encoding</span></code> parameter.</p>
 <p>This is writeable and updates the enumeration strings. The length
 of the tuple must be equal to the maximum value + 1.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple(str|bytes)</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.is_array">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_array</span></code><a class="headerlink" href="#channel_access.server.PV.is_array" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.is_array">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_array</span></span><a class="headerlink" href="#channel_access.server.PV.is_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wether this PV is an array.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.is_enum">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_enum</span></code><a class="headerlink" href="#channel_access.server.PV.is_enum" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.is_enum">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_enum</span></span><a class="headerlink" href="#channel_access.server.PV.is_enum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wether this PV is of enumeration type.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.monitor_handler">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">monitor_handler</span></code><a class="headerlink" href="#channel_access.server.PV.monitor_handler" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.monitor_handler">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">monitor_handler</span></span><a class="headerlink" href="#channel_access.server.PV.monitor_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>The monitor handler.</p>
 <p>The monitor handler is called when the attributes change.
 The handler might be called from an unspecified thread and must be
@@ -344,139 +347,139 @@ changed values.</p></li>
 </ul>
 </div></blockquote>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>callable</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.name">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">name</span></code><a class="headerlink" href="#channel_access.server.PV.name" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#channel_access.server.PV.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>The name of this PV.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.precision">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">precision</span></code><a class="headerlink" href="#channel_access.server.PV.precision" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.precision">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">precision</span></span><a class="headerlink" href="#channel_access.server.PV.precision" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current precision.</p>
 <p>This is writeable and update the precision.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.severity">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">severity</span></code><a class="headerlink" href="#channel_access.server.PV.severity" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.severity">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">severity</span></span><a class="headerlink" href="#channel_access.server.PV.severity" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current severity.</p>
 <p>This is writeable and updates the severity.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Severity</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.status">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">status</span></code><a class="headerlink" href="#channel_access.server.PV.status" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.status">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">status</span></span><a class="headerlink" href="#channel_access.server.PV.status" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current status.</p>
 <p>This is writeable and updates the status.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Status</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.status_severity">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">status_severity</span></code><a class="headerlink" href="#channel_access.server.PV.status_severity" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.status_severity">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">status_severity</span></span><a class="headerlink" href="#channel_access.server.PV.status_severity" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current status and severity.</p>
 <p>This is writeable and updates the status and severity at
 the same time.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple(<code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Status</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Severity</span></code>)</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.timestamp">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">timestamp</span></code><a class="headerlink" href="#channel_access.server.PV.timestamp" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.timestamp">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">timestamp</span></span><a class="headerlink" href="#channel_access.server.PV.timestamp" title="Permalink to this definition">¶</a></dt>
 <dd><p>The timestamp in UTC of the last time value has changed.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>datetime</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.type">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">type</span></code><a class="headerlink" href="#channel_access.server.PV.type" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.type">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#channel_access.server.PV.type" title="Permalink to this definition">¶</a></dt>
 <dd><p>The type of this PV.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Type</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.unit">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">unit</span></code><a class="headerlink" href="#channel_access.server.PV.unit" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.unit">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unit</span></span><a class="headerlink" href="#channel_access.server.PV.unit" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current unit.</p>
 <p>The type depends on the <code class="docutils literal notranslate"><span class="pre">encoding</span></code> parameter.</p>
 <p>This is writeable and updates the unit.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str|bytes</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.use_numpy">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">use_numpy</span></code><a class="headerlink" href="#channel_access.server.PV.use_numpy" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.use_numpy">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_numpy</span></span><a class="headerlink" href="#channel_access.server.PV.use_numpy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wether this PV uses numpy arrays for its value.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.value">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">value</span></code><a class="headerlink" href="#channel_access.server.PV.value" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><a class="headerlink" href="#channel_access.server.PV.value" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current value of the PV.</p>
 <p>This is writeable and updates the value and timestamp.</p>
 <p>Wether the PV is an array and the size of the array is dependent
 on the type of the value attribute.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.value_timestamp">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">value_timestamp</span></code><a class="headerlink" href="#channel_access.server.PV.value_timestamp" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.value_timestamp">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value_timestamp</span></span><a class="headerlink" href="#channel_access.server.PV.value_timestamp" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.PV.warning_limits">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">warning_limits</span></code><a class="headerlink" href="#channel_access.server.PV.warning_limits" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.PV.warning_limits">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">warning_limits</span></span><a class="headerlink" href="#channel_access.server.PV.warning_limits" title="Permalink to this definition">¶</a></dt>
 <dd><p>The warning display limits.</p>
 <p>This is writeable and updates the warning limits.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple(int|float, int|float)</p>
 </dd>
 </dl>
@@ -485,8 +488,8 @@ on the type of the value attribute.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="channel_access.server.Server">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">channel_access.server.</span></code><code class="sig-name descname"><span class="pre">Server</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numpy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.Server">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">channel_access.server.</span></span><span class="sig-name descname"><span class="pre">Server</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numpy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Channel access server.</p>
 <p>On creation this class creates a server thread which processes
 channel access messages.</p>
@@ -498,7 +501,7 @@ shuts the server down at the end of the with-statement:</p>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>encoding</strong> (<em>str</em>) – If not <code class="docutils literal notranslate"><span class="pre">None</span></code> this value is used as a
 default for the <code class="docutils literal notranslate"><span class="pre">encoding</span></code> parameter when
@@ -510,15 +513,15 @@ calling <a class="reference internal" href="#channel_access.server.Server.create
 </dd>
 </dl>
 <dl class="py method">
-<dt id="channel_access.server.Server.addAlias">
-<code class="sig-name descname"><span class="pre">addAlias</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">alias</span></em>, <em class="sig-param"><span class="pre">name</span></em>, <em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">encoding=&lt;object</span> <span class="pre">object&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.addAlias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.addAlias" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.Server.addAlias">
+<span class="sig-name descname"><span class="pre">addAlias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding=&lt;object</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.addAlias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.addAlias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add an alternative name for a PV.</p>
 <p>PVs created with <a class="reference internal" href="#channel_access.server.Server.createPV" title="channel_access.server.Server.createPV"><code class="xref py py-meth docutils literal notranslate"><span class="pre">createPV()</span></code></a> are searched first. If none is found
 the alias list ist checked. If an alias exists a second search
 using the original name is made and if a PV exists it is used.</p>
 <p>This method is thread-safe.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>alias</strong> (<em>str</em>) – The alternative name.</p></li>
 <li><p><strong>name</strong> (<em>str</em>) – The original name.</p></li>
@@ -530,8 +533,8 @@ See <em>encoding</em> parameter of <a class="reference internal" href="#channel_
 </dd></dl>
 
 <dl class="py method">
-<dt id="channel_access.server.Server.createPV">
-<code class="sig-name descname"><span class="pre">createPV</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.createPV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.createPV" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.Server.createPV">
+<span class="sig-name descname"><span class="pre">createPV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.createPV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.createPV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new channel access PV.</p>
 <p>All arguments are forwarded to the <a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a> class.</p>
 <p>The server does not hold a reference to the returned PV so it
@@ -542,79 +545,79 @@ use the new PV and ignore the other one. Connections made to the
 old PV remain active and use the old PV object.</p>
 <p>This method is thread-safe.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A new PV object.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="channel_access.server.Server.removeAlias">
-<code class="sig-name descname"><span class="pre">removeAlias</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.removeAlias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.removeAlias" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.Server.removeAlias">
+<span class="sig-name descname"><span class="pre">removeAlias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.removeAlias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.removeAlias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove an alias.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>alias</strong> (<em>str</em>) – The alias to remove</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="channel_access.server.Server.retreivePV">
-<code class="sig-name descname"><span class="pre">retreivePV</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.retreivePV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.retreivePV" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.Server.retreivePV">
+<span class="sig-name descname"><span class="pre">retreivePV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.retreivePV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.retreivePV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the active PV object for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
 <p>Raises a <code class="xref py py-class docutils literal notranslate"><span class="pre">KeyError</span></code> if no PV object can be found.</p>
 <p>This method is thread-safe.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of the PV.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A new PV object.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="channel_access.server.Server.shutdown">
-<code class="sig-name descname"><span class="pre">shutdown</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.shutdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.shutdown" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.Server.shutdown">
+<span class="sig-name descname"><span class="pre">shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#Server.shutdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.Server.shutdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shutdown the channel access server.</p>
 <p>After this is called no other methods can be called.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.Server.aliases">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">aliases</span></code><a class="headerlink" href="#channel_access.server.Server.aliases" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.Server.aliases">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">aliases</span></span><a class="headerlink" href="#channel_access.server.Server.aliases" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a dict of all aliases.</p>
 <p>This property is thread-safe.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>name): Alias mappings</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>dict(alias</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="channel_access.server.Server.pvs">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">pvs</span></code><a class="headerlink" href="#channel_access.server.Server.pvs" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="channel_access.server.Server.pvs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pvs</span></span><a class="headerlink" href="#channel_access.server.Server.pvs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of all active PV objects.</p>
 <p>The list contains all PV objects which are alive and not garbage
 collected.</p>
 <p>This property is thread-safe.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>List of active PV objects.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>list(<a class="reference internal" href="#channel_access.server.PV" title="channel_access.server.PV"><code class="xref py py-class docutils literal notranslate"><span class="pre">PV</span></code></a>)</p>
 </dd>
 </dl>
@@ -623,41 +626,41 @@ collected.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="channel_access.server.default_attributes">
-<code class="sig-prename descclassname"><span class="pre">channel_access.server.</span></code><code class="sig-name descname"><span class="pre">default_attributes</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numpy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#default_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.default_attributes" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.default_attributes">
+<span class="sig-prename descclassname"><span class="pre">channel_access.server.</span></span><span class="sig-name descname"><span class="pre">default_attributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numpy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#default_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.default_attributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the default attributes dictionary for new PVs.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">channel_access.common.Type</span></code>) – Type of the PV.</p></li>
 <li><p><strong>count</strong> (<em>int</em>) – Number of elements of the array PV or <code class="docutils literal notranslate"><span class="pre">None</span></code> if scalar.</p></li>
 <li><p><strong>use_numpy</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> use numpy arrays.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Attributes dictionary.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt id="channel_access.server.failing_write_handler">
-<code class="sig-prename descclassname"><span class="pre">channel_access.server.</span></code><code class="sig-name descname"><span class="pre">failing_write_handler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#failing_write_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.failing_write_handler" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.failing_write_handler">
+<span class="sig-prename descclassname"><span class="pre">channel_access.server.</span></span><span class="sig-name descname"><span class="pre">failing_write_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#failing_write_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.failing_write_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>A write handler which disallows writes.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="channel_access.server.is_sequence">
-<code class="sig-prename descclassname"><span class="pre">channel_access.server.</span></code><code class="sig-name descname"><span class="pre">is_sequence</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#is_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.is_sequence" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="channel_access.server.is_sequence">
+<span class="sig-prename descclassname"><span class="pre">channel_access.server.</span></span><span class="sig-name descname"><span class="pre">is_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel_access/server.html#is_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#channel_access.server.is_sequence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">value</span></code> is a sequence type.</p>
 <p>Sequences are types which can be iterated over but are not strings
 or bytes.</p>
 </dd></dl>
 
-</div>
+</section>
 
 
           </div>
@@ -714,12 +717,12 @@ or bytes.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -728,8 +731,8 @@ or bytes.</p>
       
       
       
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
       <a href="_sources/server.rst.txt"
